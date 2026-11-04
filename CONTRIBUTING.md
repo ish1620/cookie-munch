@@ -8,6 +8,8 @@ Thanks for helping. The most useful contributions, in order:
 2. **A new consent platform or button label**, with a test page (see below).
 3. Bug fixes, translations, and anything that makes the code simpler.
 
+Found a security problem? Please report it privately, as described in [SECURITY.md](SECURITY.md).
+
 Cookie Munch keeps three promises. Changes that break one of them can't be merged:
 it never clicks Accept, it never sends data anywhere, and it never touches the page beyond the banner.
 
