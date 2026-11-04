@@ -77,7 +77,7 @@ python3 -m http.server 8765 --bind 127.0.0.1
 ```
 
 - **Mock banners, all at once:** `swift tools/run_pages.swift` runs every page in WebKit (Safari's engine)
-  and prints PASS or FAIL for each, in about 15 seconds.
+  and prints PASS or FAIL for each, in under a minute.
 - **Mock banners, one by one:** open <http://127.0.0.1:8765/tests/>. On each page, run `__result()` in the
   browser console after a few seconds; it must say `pass: true`. Most pages need 2.5 s. `settings-flow` needs 7 s,
   `late-settings` 9 s, and `toggles-first-layer`, `late`, `hide-info-only`, `list-generic-hide` and the

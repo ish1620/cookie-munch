@@ -1,5 +1,6 @@
 // Runs the mock banner pages (tests/pages) in WebKit, Safari's engine, and checks that each one's
-// __result().pass is true. Pages run side by side in offscreen windows, so the whole suite takes ~15 s.
+// __result().pass is true. Up to 6 pages run side by side in offscreen windows (~40 s for the suite).
+// Each page is checked after its minimum wait; on a slow machine it gets up to 15 s more to pass.
 //
 // Serve the repository first:  python3 -m http.server 8765 --bind 127.0.0.1
 // Then:                         swift tools/run_pages.swift [page.html ...]   (default: every page on tests/index.html)
@@ -10,6 +11,8 @@ import WebKit
 let base = URL(string: "http://127.0.0.1:8765/tests/")!
 let defaultWait = 6.5                                     // seconds after the page loads
 let waits = ["settings-flow.html": 7.5, "late-settings.html": 9.5]
+let graceSeconds = 15.0                                   // extra time a slow page gets to pass
+let parallel = 6
 
 func pageNames() -> [String] {
     let named = Array(CommandLine.arguments.dropFirst())
@@ -49,11 +52,21 @@ final class PageRun: NSObject, WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + (waits[name] ?? defaultWait)) {
-            webView.evaluateJavaScript("JSON.stringify(window.__result())") { value, error in
-                let json = value as? String ?? "{\"error\": \"\(String(describing: error))\"}"
-                let result = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [String: Any]
-                self.finished(self.name, result?["pass"] as? Bool == true, json)
+        let deadline = Date().addingTimeInterval((waits[name] ?? defaultWait) + graceSeconds)
+        DispatchQueue.main.asyncAfter(deadline: .now() + (waits[name] ?? defaultWait)) { self.check(until: deadline) }
+    }
+
+    // Read the page's result; if it hasn't passed yet and there's time left, look again in a second.
+    func check(until deadline: Date) {
+        webView.evaluateJavaScript("JSON.stringify(window.__result())") { value, error in
+            let json = value as? String ?? "{\"error\": \"\(String(describing: error))\"}"
+            let result = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [String: Any]
+            let pass = result?["pass"] as? Bool == true
+            if !pass && Date() < deadline {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self.check(until: deadline) }
+            } else {
+                self.window.close()
+                self.finished(self.name, pass, json)
             }
         }
     }
@@ -66,10 +79,14 @@ final class PageRun: NSObject, WKNavigationDelegate {
 let app = NSApplication.shared
 app.setActivationPolicy(.prohibited)
 let names = pageNames()
+var queue = names
 var runs: [PageRun] = []
 var failures: [String] = []
 var remaining = names.count
-for name in names {
+
+func startNext() {
+    guard !queue.isEmpty else { return }
+    let name = queue.removeFirst()
     runs.append(PageRun(name) { name, pass, json in
         print(pass ? "PASS  \(name)" : "FAIL  \(name)  \(json)")
         if !pass { failures.append(name) }
@@ -79,9 +96,11 @@ for name in names {
                                    : "\n\(failures.count) of \(names.count) pages failed: \(failures.joined(separator: ", "))")
             exit(failures.isEmpty ? 0 : 1)
         }
+        startNext()
     })
 }
-DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
+for _ in 0..<min(parallel, names.count) { startNext() }
+DispatchQueue.main.asyncAfter(deadline: .now() + 300) {
     print("Timed out with \(remaining) pages unfinished.")
     exit(1)
 }
