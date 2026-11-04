@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Must not click: site turned off</title>
+<meta name="expect" content="">
+<meta name="disabled-sites" content="localhost,127.0.0.1">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Must not click: site turned off</h1>
+<p>Expect: no clicks, because this site is switched off in the popup.</p>
+<div class="fixed" data-banner data-keep>
+  <p>We use cookies for analytics.</p>
+  <button data-test="accept" data-close>Accept</button>
+  <button data-test="reject" data-close>Reject</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

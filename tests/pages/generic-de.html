@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Unknown banner, German, not fixed</title>
+<meta name="expect" content="reject">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Unknown banner, German, not fixed</h1>
+<section class="consent-layer inflow" data-banner>
+  <p>Wir verwenden Cookies, um unsere Website zu verbessern. Mehr in der Datenschutzerklärung.</p>
+  <button data-test="accept" data-close>Alle akzeptieren</button>
+  <button data-test="reject" data-close>Nur notwendige Cookies</button>
+</section>
+<p>Expect: clicks „Nur notwendige Cookies“. The banner sits at the top of the page, but its class says "consent".</p>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

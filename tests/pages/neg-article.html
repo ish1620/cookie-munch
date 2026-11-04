@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Must not click: article, links, newsletter</title>
+<meta name="expect" content="">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Must not click: article, links, newsletter</h1>
+<p>Expect: no clicks.</p>
+<article data-keep>
+  <p>Websites use cookies to remember you. Privacy laws say a site must ask before it stores tracking data on your device.</p>
+  <p>Do you want to hear more about this? <button data-test="decline-inline">Decline</button> (an ordinary button in the article)</p>
+</article>
+<div class="fixed" style="bottom:auto;top:16px" data-keep>
+  Cookie policy · Privacy · <a href="other.html" data-test="reject-link">Reject</a> (a real link to another page)
+  · <a href="ccpa.html" data-test="ccpa">Do not sell or share my personal information</a>
+</div>
+<div class="fixed" role="dialog" style="bottom:120px" data-keep>
+  <p>Subscribe to our newsletter for weekly recipes!</p>
+  <button data-test="subscribe">Subscribe</button>
+  <button data-test="no-thanks">No thanks</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

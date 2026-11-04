@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>List rule for this site helps decline</title>
+<meta name="expect" content="reject">
+<meta name="site-rules" content=".zq-77">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>List rule for this site helps decline</h1>
+<div class="zq-77" data-banner>
+  <p>Wir nutzen Cookies.</p>
+  <button data-test="accept" data-close>Alle akzeptieren</button>
+  <button data-test="reject" data-close>Ablehnen</button>
+</div>
+<p>Expect: clicks „Ablehnen“. Nothing about this banner looks like a banner (not fixed, meaningless class),
+but the list has a rule for it on this site, so the extension knows where to look.</p>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

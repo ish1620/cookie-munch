@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Want it on the App Store?
+    url: https://github.com/ish1620/cookie-munch/issues?q=is%3Aissue+is%3Aopen+label%3A%22app+store%22
+    about: Add a 👍 to the pinned App Store issue instead of opening a new one.

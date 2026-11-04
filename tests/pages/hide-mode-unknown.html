@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hide-only mode: unknown banner</title>
+<meta name="expect" content="">
+<meta name="mode" content="hide">
+<meta name="expect-hidden" content="yes">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Hide-only mode: unknown banner</h1>
+<p data-keep>Expect: no clicks. The list doesn't know this banner, but the label search spots it, so it's hidden.</p>
+<div class="x7a2 fixed" data-banner>
+  <p>This website uses cookies for analytics and personalised ads.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="reject" data-close>Reject all</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

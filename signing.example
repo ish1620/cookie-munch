@@ -1,0 +1,9 @@
+# Your own signing settings for tools/build_app.sh and tools/install_iphone.sh.
+# Copy this file to signing.local (git ignores it) and fill in your values.
+
+# Your Apple team ID: Xcode → Settings → Accounts → select your Apple ID → the team's ID
+# (10 characters). A free Apple ID's "Personal Team" works.
+DEVELOPMENT_TEAM=ABCDE12345
+
+# Any reverse-DNS ID of your own. The extension gets ".Extension" added to it.
+APP_BUNDLE_ID=com.yourname.CookieMunch

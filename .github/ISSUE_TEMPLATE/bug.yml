@@ -1,0 +1,28 @@
+name: Bug
+description: Something broke, or Cookie Munch did something it shouldn't
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: input
+    id: site
+    attributes:
+      label: Site, if it's about one site
+      placeholder: example.com
+  - type: input
+    id: setup
+    attributes:
+      label: Setup
+      description: Mode (Decline / Hide only), Cookie Munch version, Mac / iPhone / iPad, and Safari version.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Checked
+      options:
+        - label: The problem goes away when I switch Cookie Munch off for this site in the popup.

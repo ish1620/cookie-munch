@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Banner shows up late</title>
+<meta name="expect" content="reject">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Banner shows up late</h1>
+<p>Expect: the banner appears after 3 seconds and still gets declined.</p>
+<script>
+  setTimeout(() => {
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="fixed" data-banner>
+        <p>Our site uses cookies and similar tracking technologies.</p>
+        <button data-test="accept" data-close>OK</button>
+        <button data-test="reject" data-close>Decline</button>
+      </div>`);
+  }, 3000);
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

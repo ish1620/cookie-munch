@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Must not click: a link styled as a button</title>
+<meta name="expect" content="">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Must not click: a link styled as a button</h1>
+<p>Expect: no clicks. The banner's "Reject all" is a real link to another page with role="button",
+and clicking it would navigate away. (It may be hidden after a few seconds; that's fine.)</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to improve your experience.</p>
+  <a href="https://example.com/subscribe" role="button" data-test="reject-link">Reject all</a>
+  <button data-test="accept" data-close>Accept all</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

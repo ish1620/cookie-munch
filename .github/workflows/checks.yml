@@ -1,0 +1,30 @@
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: JavaScript syntax
+        run: for file in extension/*.js tests/harness.js tests/*.mjs; do node --check "$file"; done
+      - name: JSON files
+        run: |
+          for file in extension/manifest.json extension/cookie-rules.json extension/rules/*.json extension/_locales/*/messages.json; do
+            python3 -m json.tool "$file" > /dev/null
+          done
+      - name: Button labels
+        run: node tests/labels.mjs
+      - name: Manifest, translations and version
+        run: node tests/check_extension.mjs
+      - name: Python tools compile
+        run: python3 -m py_compile tools/*.py

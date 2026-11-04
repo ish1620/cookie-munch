@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cookie Munch tests</title>
+<link rel="stylesheet" href="pages/style.css">
+</head>
+<body>
+<h1>Cookie Munch test pages</h1>
+<p>Each page is a mock cookie banner. The extension's script is loaded right into the page, with a stand-in for
+Safari's extension APIs, so these work in any browser. Open the console and run <code>__result()</code> on a page
+to see what was clicked.</p>
+<p>With the real extension loaded in Safari, you can also open these pages there and watch the banners disappear
+(the copy loaded by the page and the extension's own copy don't conflict).</p>
+<h2>Should decline</h2>
+<ul>
+  <li><a href="pages/onetrust.html">OneTrust (known platform)</a></li>
+  <li><a href="pages/usercentrics-shadow.html">Usercentrics in shadow DOM</a></li>
+  <li><a href="pages/generic-en.html">Unknown banner, English</a></li>
+  <li><a href="pages/generic-ja.html">Unknown banner, Japanese</a></li>
+  <li><a href="pages/generic-de.html">Unknown banner, German, not fixed</a></li>
+  <li><a href="pages/accept-necessary.html">"Accept only necessary" wording</a></li>
+  <li><a href="pages/settings-flow.html">No reject button: settings flow</a></li>
+  <li><a href="pages/toggles-first-layer.html">Switches on the first layer</a></li>
+  <li><a href="pages/iframe.html">Banner inside an iframe</a></li>
+  <li><a href="pages/late.html">Banner shows up after 3 seconds</a></li>
+  <li><a href="pages/late-settings.html">Settings-only banner after 3 seconds</a></li>
+  <li><a href="pages/shadow-generic.html">Custom element with shadow DOM</a></li>
+  <li><a href="pages/list-site-rule.html">List rule for this site helps decline</a></li>
+</ul>
+<h2>Should hide, without clicking</h2>
+<ul>
+  <li><a href="pages/hide-info-only.html">Information-only banner (Decline mode)</a></li>
+  <li><a href="pages/list-generic-hide.html">Banner only the list recognizes (Decline mode)</a></li>
+  <li><a href="pages/hide-mode-known.html">Hide-only mode: known platform</a></li>
+  <li><a href="pages/hide-mode-unknown.html">Hide-only mode: unknown banner</a></li>
+  <li><a href="pages/hide-mode-scroll.html">Hide-only mode: banner that froze scrolling</a></li>
+  <li><a href="pages/hide-mode-iframe.html">Hide-only mode: consent dialog in an iframe</a></li>
+</ul>
+<h2>Must not click or hide anything</h2>
+<ul>
+  <li><a href="pages/neg-link-button.html">A link styled as a button</a></li>
+  <li><a href="pages/neg-calendar.html">Calendar invite with Accept/Decline</a></li>
+  <li><a href="pages/neg-article.html">Article, real links, newsletter popup</a></li>
+  <li><a href="pages/neg-disabled.html">Site switched off in the popup</a></li>
+</ul>
+</body>
+</html>

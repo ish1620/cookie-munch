@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings-only banner that shows up late</title>
+<meta name="expect" content="settings,analytics,marketing,save">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings-only banner that shows up late</h1>
+<p>Expect: the banner (only "Accept all" and "Manage preferences") appears after 3 seconds, just before
+Decline mode would hide leftovers. It must still be declined through its settings, not hidden.</p>
+<script>
+  setTimeout(() => {
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="fixed" data-banner>
+        <p>We use cookies to give you the best experience on our site.</p>
+        <button data-test="accept" data-close>Accept all</button>
+        <button data-test="settings" data-open="panel">Manage preferences</button>
+      </div>
+      <div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+        <h2>Cookie preferences</h2>
+        <label><input type="checkbox" data-test="necessary" checked disabled> Strictly necessary</label>
+        <label><input type="checkbox" data-test="analytics" checked> Analytics</label>
+        <label><input type="checkbox" data-test="marketing" checked> Marketing</label>
+        <button data-test="accept" data-close>Accept all</button>
+        <button data-test="save" data-close>Save my choices</button>
+      </div>`);
+  }, 3000);
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

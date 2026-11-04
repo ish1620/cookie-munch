@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cookie Munch demo</title>
+<style>
+  :root { --bg: #fff; --text: #1d1d1f; --muted: #6e6e73; --card: #f5f5f7; --ok: #2b8a3e; --bad: #c92a2a; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #1c1c1e; --text: #f5f5f7; --muted: #a1a1a6; --card: #2c2c2e; --ok: #51cf66; --bad: #ff6b6b; }
+  }
+  body { margin: 0; padding: 24px 16px 200px; background: var(--bg); color: var(--text);
+         font: 17px/1.5 -apple-system, BlinkMacSystemFont, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; }
+  .result { padding: 16px; border-radius: 12px; background: var(--card); font-weight: 600; }
+  .result[data-state="rejected"] { color: var(--ok); }
+  .result[data-state="accepted"] { color: var(--bad); }
+  .banner { position: fixed; left: 12px; right: 12px; bottom: 12px; padding: 16px; border-radius: 14px;
+            background: var(--card); box-shadow: 0 6px 30px rgba(0, 0, 0, 0.25); }
+  .banner p { margin: 0 0 12px; font-size: 15px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .b1, .b2 { flex: 1; padding: 10px 14px; border-radius: 10px; border: 0; font: inherit; font-weight: 600; }
+  .b1 { background: #0a84ff; color: #fff; }
+  .b2 { background: transparent; color: var(--text); border: 1px solid var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Cookie Munch demo</h1>
+  <p>This page doesn't load the extension's code. Only the real extension can answer the banner below.
+     Its class names mean nothing on purpose, so the extension has to recognize it by its wording.</p>
+  <p id="result" class="result" data-state="waiting">Waiting… the banner hasn't been answered.</p>
+</main>
+
+<div class="banner k3" id="z81">
+  <p>We use cookies to measure traffic and personalise ads. You can accept or reject them.</p>
+  <div class="row">
+    <button class="b1" data-choice="accepted">Accept all</button>
+    <button class="b2" data-choice="rejected">Reject all</button>
+  </div>
+</div>
+
+<script>
+  const started = performance.now();
+  for (const button of document.querySelectorAll('[data-choice]')) {
+    button.addEventListener('click', () => {
+      const seconds = ((performance.now() - started) / 1000).toFixed(1);
+      const result = document.getElementById('result');
+      result.dataset.state = button.dataset.choice;
+      result.textContent = button.dataset.choice === 'rejected'
+        ? `✓ Rejected after ${seconds} s.`
+        : `✗ Accepted after ${seconds} s. That should never happen.`;
+      document.title = `${button.dataset.choice === 'rejected' ? '✓ Rejected' : '✗ Accepted'} · Cookie Munch demo`;
+      document.getElementById('z81').remove();
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+name: Missed banner
+description: A cookie banner that Cookie Munch didn't decline or hide
+title: "Missed banner: "
+labels: ["missed banner"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! The popup's **Report it** link fills in the first two fields (the site's name and your
+        setup). Please don't paste full page
+        addresses with personal details in them: the site's name is enough.
+  - type: input
+    id: site
+    attributes:
+      label: Site
+      description: The website's name, for example `example.com`.
+      placeholder: example.com
+    validations:
+      required: true
+  - type: input
+    id: setup
+    attributes:
+      label: Setup
+      description: Mode, Cookie Munch version, and Mac / iPhone / iPad.
+      placeholder: Decline mode · Cookie Munch 1.3.0 · Safari on Mac
+    validations:
+      required: true
+  - type: dropdown
+    id: what
+    attributes:
+      label: What happened?
+      options:
+        - The banner stayed on screen
+        - It was hidden, but I expected it to be declined
+        - The page couldn't scroll afterwards
+        - Something else (described below)
+    validations:
+      required: true
+  - type: input
+    id: country
+    attributes:
+      label: Country you browsed from (optional)
+      description: Many sites only show banners in some countries.
+  - type: textarea
+    id: details
+    attributes:
+      label: Details or screenshot (optional)
+      description: The buttons the banner offers, or a screenshot. Hide anything personal first.

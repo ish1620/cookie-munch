@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cookie Munch popup preview</title>
+  <style>
+    body { margin: 0; padding: 16px; font: 13px -apple-system, sans-serif; background: #8a8a8e; }
+    .grid { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+    figure { margin: 0; }
+    figcaption { color: #fff; margin-bottom: 4px; }
+    iframe { border: 0; border-radius: 10px; width: 300px; background: transparent; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+  </style>
+</head>
+<body>
+  <!--
+    Shows the real extension popup (../extension/popup.html) with a fake browser API, so its
+    states and languages can be checked without Safari. Serve the repository root
+    (python3 -m http.server 8765) and open /tests/popup-preview.html. Optional query:
+      ?lang=en|ja|es  &states=rejected,saved,hidden,quiet,hide-mode,off,no-access,not-web
+      &total=137  &repo=1 (pretend the repository URL is set, to show "Report it")
+    window.__previews lists each frame's state, headline and the issue URL "Report it" would open.
+  -->
+  <div class="grid" id="grid"></div>
+  <script>
+    const q = new URLSearchParams(location.search);
+    const lang = q.get('lang') || 'en';
+    const total = Number(q.get('total') ?? 137);
+    const states = (q.get('states') || 'rejected,saved,hidden,quiet,hide-mode,off,no-access,not-web').split(',');
+    window.__previews = [];
+    // &bare=1: no captions and a transparent background, for screenshots (tools/popup_screenshot.swift).
+    if (q.get('bare')) {
+      document.head.insertAdjacentHTML('beforeend',
+        '<style>body { background: transparent; padding: 20px 24px 32px; } figcaption { display: none; }</style>');
+    }
+
+    const SCENES = {
+      rejected: { url: 'https://www.theguardian.com/', status: { how: 'rejected', platform: 'Sourcepoint' } },
+      saved: { url: 'https://example-news.es/', status: { how: 'saved with optional cookies off', platform: 'Didomi' } },
+      hidden: { url: 'https://example.jp/', status: { how: 'hidden' } },
+      quiet: { url: 'https://example.org/', status: null },
+      'hide-mode': { url: 'https://www.bbc.com/', status: null, mode: 'hide' },
+      off: { url: 'https://mail.example.com/', status: null, disabled: true },
+      'no-access': { url: '', status: null },
+      'not-web': { url: 'about:blank', status: null },
+    };
+
+    function stub(scene, record) {
+      // Runs inside the popup frame before config.js and popup.js.
+      return `<script>
+        (() => {
+          const scene = ${JSON.stringify(scene)};
+          const lang = ${JSON.stringify(lang)};
+          const xhr = new XMLHttpRequest();
+          xhr.open('GET', '/extension/_locales/' + lang + '/messages.json', false);
+          xhr.send();
+          const messages = JSON.parse(xhr.responseText);
+          const store = { total: ${total}, mode: scene.mode || 'decline',
+            disabledSites: scene.disabled ? [new URL(scene.url).hostname.replace(/^www\\./, '')] : [] };
+          globalThis.browser = {
+            i18n: {
+              getUILanguage: () => lang,
+              getMessage(key, subs = []) {
+                const m = messages[key];
+                if (!m) return '';
+                let text = m.message.replace(/\\$([A-Z_]+)\\$/g, (_, name) => m.placeholders?.[name.toLowerCase()]?.content ?? '');
+                return text.replace(/\\$(\\d)/g, (_, i) => subs[i - 1] ?? '');
+              },
+            },
+            tabs: {
+              query: async () => [{ id: 1, url: scene.url }],
+              create: async ({ url }) => { parent.__previews[${record}].opened = url; },
+            },
+            storage: { local: {
+              get: async (defaults) => ({ ...defaults, ...store }),
+              set: async (values) => Object.assign(store, values),
+            } },
+            runtime: {
+              sendMessage: async () => scene.status,
+              getManifest: () => ({ version: '1.3.0' }),
+            },
+          };
+          window.close = () => {};
+        })();
+      <\/script>`;
+    }
+
+    fetch('/extension/popup.html').then((r) => r.text()).then((html) => {
+      states.forEach((name, i) => {
+        const scene = SCENES[name];
+        window.__previews.push({ state: name });
+        let doc = html.replace('<head>', '<head><base href="/extension/">' + stub(scene, i));
+        // With &repo=1, set the URL after config.js has run.
+        if (q.get('repo')) doc = doc.replace('<script src="popup.js">', '<script>globalThis.COOKIE_MUNCH_REPO_URL = "https://github.com/example/cookie-munch";<\/script><script src="popup.js">');
+        const figure = document.createElement('figure');
+        const caption = document.createElement('figcaption');
+        caption.textContent = name;
+        figure.append(caption);
+        const frame = document.createElement('iframe');
+        frame.srcdoc = doc;
+        // &theme=dark or light forces one look; &theme=alternate switches frame by frame.
+        const theme = q.get('theme');
+        if (theme) frame.style.colorScheme = theme === 'alternate' ? (i % 2 ? 'dark' : 'light') : theme;
+        frame.addEventListener('load', () => {
+          setTimeout(() => {
+            const d = frame.contentDocument;
+            frame.style.height = d.documentElement.scrollHeight + 'px';
+            Object.assign(window.__previews[i], {
+              headline: d.getElementById('headline').textContent,
+              detail: d.getElementById('detail').textContent,
+              total: d.getElementById('stat-total').textContent,
+              time: d.getElementById('stat-time').textContent,
+              reportShown: !d.getElementById('report-row').hidden,
+              munched: d.body.classList.contains('munched'),
+            });
+          }, 300);
+        });
+        figure.append(frame);
+        document.getElementById('grid').append(figure);
+      });
+    });
+  </script>
+</body>
+</html>

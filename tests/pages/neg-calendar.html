@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Must not click: calendar invite</title>
+<meta name="expect" content="">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Must not click: calendar invite</h1>
+<p>Expect: no clicks. A dialog with Accept/Decline that mentions a cookie but is not a cookie banner.</p>
+<div class="fixed" role="dialog" aria-modal="true" data-keep>
+  <h2>Cookie decorating party</h2>
+  <p>Thursday 3pm, break room. Organizer: Sam.</p>
+  <button data-test="accept">Accept</button>
+  <button data-test="decline">Decline</button>
+  <button data-test="maybe">Maybe</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

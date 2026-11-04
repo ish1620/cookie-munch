@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hide-only mode: frozen scrolling</title>
+<meta name="expect" content="">
+<meta name="mode" content="hide">
+<meta name="expect-hidden" content="yes">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Hide-only mode: frozen scrolling</h1>
+<p data-keep>Expect: no clicks, the banner is hidden, and the page can scroll again.</p>
+<div style="height:3000px">Tall page content…</div>
+<div id="didomi-host"><div id="didomi-notice" class="didomi-notice-banner fixed" data-banner>
+  <p>We and our partners use cookies.</p>
+  <button data-test="accept" data-close>Agree and close</button>
+  <button data-test="more" data-close>Learn more</button>
+</div></div>
+<script>
+  // Like Didomi: freeze scrolling while the banner is open.
+  document.body.classList.add('didomi-popup-open');
+  document.body.style.overflow = 'hidden';
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

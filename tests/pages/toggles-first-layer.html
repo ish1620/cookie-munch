@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Switches on the first layer</title>
+<meta name="expect" content="preferences,statistics,marketing,save">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Switches on the first layer</h1>
+<p>Expect: switches every optional category off, then clicks "Allow selection".</p>
+<div class="fixed" data-banner>
+  <p>This website uses cookies. We use cookies to personalise content and to analyse our traffic.</p>
+  <div>Necessary <span role="switch" aria-checked="true" aria-disabled="true" data-test="necessary">on</span>
+       Preferences <span role="switch" aria-checked="true" tabindex="0" data-test="preferences">on</span>
+       Statistics <span role="switch" aria-checked="true" tabindex="0" data-test="statistics">on</span>
+       Marketing <span role="switch" aria-checked="true" tabindex="0" data-test="marketing">on</span></div>
+  <button data-test="save" data-close>Allow selection</button>
+  <button data-test="accept" data-close>Allow all</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Usercentrics in shadow DOM (known platform)</title>
+<meta name="expect" content="reject">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Usercentrics in shadow DOM (known platform)</h1>
+<p>Expect: finds the deny button inside a shadow root.</p>
+<div id="usercentrics-root"></div>
+<script>
+  const root = document.getElementById('usercentrics-root').attachShadow({ mode: 'open' });
+  root.innerHTML = `<link rel="stylesheet" href="style.css">
+    <div class="fixed" data-banner>
+      <p>This website uses cookies and similar technologies. Privacy settings.</p>
+      <button data-testid="uc-more-button" data-test="settings">Settings</button>
+      <button data-testid="uc-deny-all-button" data-test="reject" data-close>Deny</button>
+      <button data-testid="uc-accept-all-button" data-test="accept" data-close>Accept All</button>
+    </div>`;
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

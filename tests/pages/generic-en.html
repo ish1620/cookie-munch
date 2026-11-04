@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Unknown banner, English</title>
+<meta name="expect" content="reject">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Unknown banner, English</h1>
+<p>Expect: clicks "Reject all" by its label. Class names are meaningless on purpose.</p>
+<div class="x7a2 fixed" data-banner>
+  <p>This website uses cookies for analytics and personalised ads. <a href="privacy.html" data-test="policy">Privacy policy</a></p>
+  <div class="q1" role="button" tabindex="0" data-test="accept" data-close>Accept all</div>
+  <button class="q2" data-test="reject" data-close>Reject all</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

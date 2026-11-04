@@ -1,0 +1,10 @@
+body { font: 15px/1.5 -apple-system, sans-serif; margin: 0; padding: 24px; color: #222; }
+.fixed { position: fixed; left: 16px; right: 16px; bottom: 16px; padding: 16px; background: #fff;
+         border: 1px solid #ccc; border-radius: 10px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); }
+.inflow { padding: 16px; background: #f4f4f4; border-bottom: 1px solid #ccc; margin: -24px -24px 24px; }
+button, [role="button"] { margin: 4px 6px 0 0; padding: 6px 12px; cursor: pointer; display: inline-block;
+                          border: 1px solid #999; border-radius: 6px; background: #f8f8f8; }
+[role="switch"] { min-width: 48px; }
+[role="switch"][aria-checked="true"] { background: #2b8a3e; color: #fff; }
+label { display: block; }
+article { max-width: 640px; }

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cookie Munch</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <span class="mascot" aria-hidden="true">
+        <img src="icons/icon-128.png" alt="" width="64" height="64">
+        <i class="crumb"></i><i class="crumb"></i><i class="crumb"></i>
+      </span>
+      <div class="said" role="status">
+        <h1 id="headline">Cookie Munch</h1>
+        <p id="detail" class="detail" data-i18n="checking">Checking this page…</p>
+        <p id="platform" class="platform" hidden></p>
+      </div>
+    </header>
+
+    <section class="stats">
+      <div class="stat">
+        <strong id="stat-total">0</strong>
+        <span data-i18n="statMunched">banners munched</span>
+      </div>
+      <div class="stat">
+        <strong id="stat-time">0 s</strong>
+        <span data-i18n="statTime">time saved, at 4 s each</span>
+      </div>
+    </section>
+
+    <label id="site-row" class="site-row">
+      <span>
+        <span class="site-label" data-i18n="siteLabel">Handle banners on</span>
+        <span id="host" class="host"></span>
+      </span>
+      <input id="site-toggle" type="checkbox" role="switch" checked>
+    </label>
+
+    <fieldset class="mode">
+      <legend data-i18n="modeLegend">On every site</legend>
+      <div class="segmented">
+        <input type="radio" name="mode" id="mode-decline" value="decline" checked>
+        <label for="mode-decline" data-i18n="modeDecline">Decline</label>
+        <input type="radio" name="mode" id="mode-hide" value="hide">
+        <label for="mode-hide" data-i18n="modeHide">Hide only</label>
+      </div>
+      <p id="mode-help" class="hint"></p>
+    </fieldset>
+
+    <p id="reload-hint" class="hint reload" data-i18n="reloadHint" hidden>Reload the page to apply.</p>
+
+    <footer id="report-row" class="report" hidden>
+      <button id="report" type="button" class="link" data-i18n="report">Missed a banner here? Report it</button>
+      <p class="hint small" data-i18n="reportHint"></p>
+    </footer>
+  </main>
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

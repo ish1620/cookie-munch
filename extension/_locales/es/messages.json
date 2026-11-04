@@ -1,0 +1,46 @@
+{
+  "extName": { "message": "Cookie Munch" },
+  "extDescription": { "message": "Rechaza por ti los avisos de cookies y oculta los que no se pueden rechazar. Nunca pulsa «Aceptar»." },
+
+  "checking": { "message": "Revisando esta página…" },
+  "headMunched": { "message": "¡Ñam!" },
+  "detailRejected": { "message": "Se ha pulsado «Rechazar» en el aviso de cookies de esta página." },
+  "detailSaved": { "message": "Se han desactivado las cookies opcionales y se ha guardado." },
+  "headHidden": { "message": "Oculto." },
+  "detailHiddenDecline": { "message": "Este aviso no dejaba decir que no, así que se ha ocultado." },
+  "detailHiddenHide": { "message": "Se ha ocultado el aviso de cookies de esta página sin responderlo." },
+  "headQuiet": { "message": "Todo tranquilo." },
+  "detailQuiet": { "message": "De momento no hay aviso de cookies en esta página." },
+  "headHideMode": { "message": "Ocultando avisos." },
+  "detailHideMode": { "message": "La lista de cookies oculta los avisos de esta página, sin responderlos." },
+  "headOff": { "message": "Desactivado aquí." },
+  "detailOff": { "message": "Cookie Munch no toca este sitio." },
+  "headNeedsAccess": { "message": "Falta un permiso." },
+  "detailNeedsAccess": { "message": "En Ajustes de Safari → Extensiones → Cookie Munch, permítelo en todos los sitios web." },
+  "headNotWeb": { "message": "Aquí no hay nada que hacer." },
+  "detailNotWeb": { "message": "Cookie Munch funciona en páginas web." },
+  "headError": { "message": "Algo ha fallado." },
+  "viaPlatform": {
+    "message": "Aviso: $PLATFORM$",
+    "placeholders": { "platform": { "content": "$1", "example": "OneTrust" } }
+  },
+
+  "statMunched": { "message": "avisos devorados" },
+  "statTime": { "message": "tiempo ahorrado, a 4 s cada uno" },
+  "timeSeconds": { "message": "$N$ s", "placeholders": { "n": { "content": "$1" } } },
+  "timeMinutes": { "message": "$N$ min", "placeholders": { "n": { "content": "$1" } } },
+  "timeHours": {
+    "message": "$H$ h $M$ min",
+    "placeholders": { "h": { "content": "$1" }, "m": { "content": "$2" } }
+  },
+
+  "siteLabel": { "message": "Actuar en" },
+  "modeLegend": { "message": "En todos los sitios" },
+  "modeDecline": { "message": "Rechazar" },
+  "modeHide": { "message": "Solo ocultar" },
+  "helpDecline": { "message": "Pulsa «Rechazar» en los avisos de cookies. Oculta los que no se pueden rechazar." },
+  "helpHide": { "message": "Como Brave: oculta los avisos y bloquea sus scripts. Nunca los responde." },
+  "reloadHint": { "message": "Recarga la página para aplicarlo." },
+  "report": { "message": "¿Se ha colado algún aviso? Avísanos" },
+  "reportHint": { "message": "Abre una incidencia en GitHub con el nombre de este sitio y tu configuración (modo, versión, Mac o iPhone). No se envía nada si no la publicas." }
+}

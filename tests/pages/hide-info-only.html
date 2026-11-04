@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Information-only banner: hidden, never accepted</title>
+<meta name="expect" content="">
+<meta name="expect-hidden" content="yes">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Information-only banner: hidden, never accepted</h1>
+<p>Expect: no clicks (the only choice is "Got it", and the extension never accepts). After 4 seconds the banner is hidden instead.</p>
+<div class="fixed" data-banner>
+  <p>This site uses cookies. <a href="cookies.html" data-test="learn-more">Learn more</a></p>
+  <button data-test="accept" data-close>Got it</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

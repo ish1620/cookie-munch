@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>No reject button: settings flow</title>
+<meta name="expect" content="settings,analytics,marketing,save">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>No reject button: settings flow</h1>
+<p>Expect: opens "Manage preferences", switches Analytics and Marketing off, clicks "Save my choices".</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <label><input type="checkbox" data-test="necessary" checked disabled> Strictly necessary</label>
+  <label><input type="checkbox" data-test="analytics" checked> Analytics</label>
+  <label><input type="checkbox" data-test="marketing" checked> Marketing</label>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="save" data-close>Save my choices</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

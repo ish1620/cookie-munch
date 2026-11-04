@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>List hides what can't be declined</title>
+<meta name="expect" content="">
+<meta name="expect-hidden" content="yes">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>List hides what can't be declined</h1>
+<div id="BandeauCNIL" data-banner>
+  Ce site utilise des traceurs. <button data-test="ok">J’ai compris</button>
+</div>
+<p data-keep>Expect: no clicks. The extension can't tell this is a banner, but a list rule
+(<code>#BandeauCNIL</code>) can, so it's hidden after 4 seconds.</p>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

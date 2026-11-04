@@ -1,0 +1,496 @@
+{
+  "default-configuration": "Release",
+  "configurations": [
+    "Debug",
+    "Release",
+  ],
+  "localizations": {
+    "development": "en",
+    "supported": [
+      "Base",
+    ],
+  },
+  "files": [
+    {
+      "kind": "group",
+      "path": "Shared (App)",
+      "children": [
+        {
+          "path": "ViewController.swift",
+          "target-membership": [
+            "Cookie Munch (iOS)/compile-sources",
+            "Cookie Munch (macOS)/compile-sources",
+          ],
+        }, {
+          "path": "Assets.xcassets",
+          "target-membership": [
+            "Cookie Munch (iOS)/resources",
+            "Cookie Munch (macOS)/resources",
+          ],
+        }, {
+          "kind": "group",
+          "path": "Resources",
+          "children": [
+            {
+              "kind": "variant-group",
+              "name": "Main.html",
+              "target-membership": [
+                "Cookie Munch (iOS)/resources",
+                "Cookie Munch (macOS)/resources",
+              ],
+              "children": [
+                {
+                  "path": "Base.lproj/Main.html",
+                },
+              ],
+            }, {
+              "path": "Icon.png",
+              "target-membership": [
+                "Cookie Munch (iOS)/resources",
+                "Cookie Munch (macOS)/resources",
+              ],
+            }, {
+              "path": "Style.css",
+              "target-membership": [
+                "Cookie Munch (iOS)/resources",
+                "Cookie Munch (macOS)/resources",
+              ],
+            }, {
+              "path": "Script.js",
+              "target-membership": [
+                "Cookie Munch (iOS)/resources",
+                "Cookie Munch (macOS)/resources",
+              ],
+            },
+          ],
+        },
+      ],
+    }, {
+      "kind": "group",
+      "path": "Shared (Extension)",
+      "children": [
+        {
+          "kind": "group",
+          "path": "<PROJECT>/Shared (Extension)",
+          "name": "Resources",
+          "children": [
+            {
+              "path": "../../../extension/_locales",
+              "target-membership": [
+                "Cookie Munch Extension (iOS)/resources",
+                "Cookie Munch Extension (macOS)/resources",
+              ],
+            }, {
+              "path": "../../../extension/config.js",
+              "target-membership": [
+                "Cookie Munch Extension (iOS)/resources",
+                "Cookie Munch Extension (macOS)/resources",
+              ],
+            }, {
+              "path": "../../../extension/popup.js",
+              "target-membership": [
+                "Cookie Munch Extension (iOS)/resources",
+                "Cookie Munch Extension (macOS)/resources",
+              ],
+            }, {
+              "path": "../../../extension/rules.js",
+              "target-membership": [
+                "Cookie Munch Extension (iOS)/resources",
+                "Cookie Munch Extension (macOS)/resources",
+              ],
+            }, {
+              "path": "../../../extension/background.js",
+              "target-membership": [
+                "Cookie Munch Extension (iOS)/resources",
+                "Cookie Munch Extension (macOS)/resources",
+              ],
+            }, {
+              "path": "../../../extension/popup.html",
+              "target-membership": [
+                "Cookie Munch Extension (iOS)/resources",
+                "Cookie Munch Extension (macOS)/resources",
+              ],
+            }, {
+              "path": "../../../extension/icons",
+              "target-membership": [
+                "Cookie Munch Extension (iOS)/resources",
+                "Cookie Munch Extension (macOS)/resources",
+              ],
+            }, {
+              "path": "../../../extension/manifest.json",
+              "target-membership": [
+                "Cookie Munch Extension (iOS)/resources",
+                "Cookie Munch Extension (macOS)/resources",
+              ],
+            }, {
+              "path": "../../../extension/rules",
+              "target-membership": [
+                "Cookie Munch Extension (iOS)/resources",
+                "Cookie Munch Extension (macOS)/resources",
+              ],
+            }, {
+              "path": "../../../extension/cookie-rules.json",
+              "target-membership": [
+                "Cookie Munch Extension (iOS)/resources",
+                "Cookie Munch Extension (macOS)/resources",
+              ],
+            }, {
+              "path": "../../../extension/popup.css",
+              "target-membership": [
+                "Cookie Munch Extension (iOS)/resources",
+                "Cookie Munch Extension (macOS)/resources",
+              ],
+            }, {
+              "path": "../../../extension/content.js",
+              "target-membership": [
+                "Cookie Munch Extension (iOS)/resources",
+                "Cookie Munch Extension (macOS)/resources",
+              ],
+            },
+          ],
+        }, {
+          "path": "SafariWebExtensionHandler.swift",
+          "target-membership": [
+            "Cookie Munch Extension (iOS)/compile-sources",
+            "Cookie Munch Extension (macOS)/compile-sources",
+          ],
+        },
+      ],
+    }, {
+      "kind": "group",
+      "path": "iOS (App)",
+      "children": [
+        { "path": "AppDelegate.swift", "target-membership": [ "Cookie Munch (iOS)/compile-sources" ] },
+        { "path": "SceneDelegate.swift", "target-membership": [ "Cookie Munch (iOS)/compile-sources" ] },
+        {
+          "kind": "variant-group",
+          "name": "LaunchScreen.storyboard",
+          "target-membership": [
+            "Cookie Munch (iOS)/resources",
+          ],
+          "children": [
+            {
+              "path": "Base.lproj/LaunchScreen.storyboard",
+            },
+          ],
+        }, {
+          "kind": "variant-group",
+          "name": "Main.storyboard",
+          "target-membership": [
+            "Cookie Munch (iOS)/resources",
+          ],
+          "children": [
+            {
+              "path": "Base.lproj/Main.storyboard",
+            },
+          ],
+        },
+        { "path": "Info.plist" },
+      ],
+    }, {
+      "kind": "group",
+      "path": "macOS (App)",
+      "children": [
+        { "path": "AppDelegate.swift", "target-membership": [ "Cookie Munch (macOS)/compile-sources" ] },
+        {
+          "kind": "variant-group",
+          "name": "Main.storyboard",
+          "target-membership": [
+            "Cookie Munch (macOS)/resources",
+          ],
+          "children": [
+            {
+              "path": "Base.lproj/Main.storyboard",
+            },
+          ],
+        },
+        { "path": "Info.plist" },
+      ],
+    }, {
+      "kind": "group",
+      "path": "iOS (Extension)",
+      "children": [
+        { "path": "Info.plist" },
+      ],
+    }, {
+      "kind": "group",
+      "path": "macOS (Extension)",
+      "children": [
+        { "path": "Info.plist" },
+      ],
+    }, {
+      "kind": "group",
+      "name": "Products",
+      "children": [
+        { "path": "<PRODUCTS>/Cookie Munch.app", "id": "E47065BF309A207400370872", "type": "wrapper.application", "index": false },
+        { "path": "<PRODUCTS>/Cookie Munch.app", "id": "E47065D1309A207400370872", "type": "wrapper.application", "index": false },
+        { "path": "<PRODUCTS>/Cookie Munch Extension.appex", "id": "E47065DD309A207400370872", "type": "wrapper.app-extension", "index": false, "target-membership": [ { "build-phase": "Cookie Munch (iOS)/copy/Embed Foundation Extensions", "header-preservation": "remove-on-copy" } ] },
+        { "path": "<PRODUCTS>/Cookie Munch Extension.appex", "id": "E47065E7309A207400370872", "type": "wrapper.app-extension", "index": false, "target-membership": [ { "build-phase": "Cookie Munch (macOS)/copy/Embed Foundation Extensions", "header-preservation": "remove-on-copy" } ] },
+      ],
+    },
+  ],
+  "targets": [
+    {
+      "name": "Cookie Munch (iOS)",
+      "id": "E47065BE309A207400370872",
+      "product": "id:E47065BF309A207400370872",
+      "product-type": "application",
+      "dependencies": [
+        "Cookie Munch Extension (iOS)",
+      ],
+      "build-phases": [
+        "compile-sources",
+        "frameworks",
+        "resources",
+        {
+          "kind": "copy",
+          "name": "Embed Foundation Extensions",
+          "bundle-base-path": "plugins-directory",
+        },
+      ],
+      "build-settings": {
+        "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
+        "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "AccentColor",
+        "APP_BUNDLE_ID": "com.example.CookieMunch",
+        "CODE_SIGN_STYLE": "Automatic",
+        "CURRENT_PROJECT_VERSION": "1",
+        "DEVELOPMENT_TEAM": "",
+        "GENERATE_INFOPLIST_FILE": "YES",
+        "INFOPLIST_FILE": "iOS (App)/Info.plist",
+        "INFOPLIST_KEY_CFBundleDisplayName": "Cookie Munch",
+        "INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents": "YES",
+        "INFOPLIST_KEY_UILaunchStoryboardName": "LaunchScreen",
+        "INFOPLIST_KEY_UIMainStoryboardFile": "Main",
+        "INFOPLIST_KEY_UISupportedInterfaceOrientations": "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight",
+        "INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad": "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight",
+        "IPHONEOS_DEPLOYMENT_TARGET": "17.0",
+        "LD_RUNPATH_SEARCH_PATHS": [
+          "$(inherited)",
+          "@executable_path/Frameworks",
+        ],
+        "MARKETING_VERSION": "1.3",
+        "OTHER_LDFLAGS": [
+          "-framework",
+          "SafariServices",
+          "-framework",
+          "WebKit",
+        ],
+        "PRODUCT_BUNDLE_IDENTIFIER": "$(APP_BUNDLE_ID)",
+        "PRODUCT_NAME": "Cookie Munch",
+        "SDKROOT": "iphoneos",
+        "STRING_CATALOG_GENERATE_SYMBOLS": "YES",
+        "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
+        "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
+        "SWIFT_EMIT_LOC_STRINGS": "YES",
+        "SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY": "YES",
+        "SWIFT_VERSION": "5.0",
+        "TARGETED_DEVICE_FAMILY": "1,2",
+        "VALIDATE_PRODUCT[config=Release]": "YES",
+      },
+    }, {
+      "name": "Cookie Munch (macOS)",
+      "id": "E47065D0309A207400370872",
+      "product": "id:E47065D1309A207400370872",
+      "product-type": "application",
+      "dependencies": [
+        "Cookie Munch Extension (macOS)",
+      ],
+      "build-phases": [
+        "compile-sources",
+        "frameworks",
+        "resources",
+        {
+          "kind": "copy",
+          "name": "Embed Foundation Extensions",
+          "bundle-base-path": "plugins-directory",
+        },
+      ],
+      "build-settings": {
+        "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
+        "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "AccentColor",
+        "APP_BUNDLE_ID": "com.example.CookieMunch",
+        "CODE_SIGN_STYLE": "Automatic",
+        "CURRENT_PROJECT_VERSION": "1",
+        "DEVELOPMENT_TEAM": "",
+        "ENABLE_APP_SANDBOX": "YES",
+        "ENABLE_HARDENED_RUNTIME": "YES",
+        "ENABLE_USER_SELECTED_FILES": "readonly",
+        "GENERATE_INFOPLIST_FILE": "YES",
+        "INFOPLIST_FILE": "macOS (App)/Info.plist",
+        "INFOPLIST_KEY_CFBundleDisplayName": "Cookie Munch",
+        "INFOPLIST_KEY_NSMainStoryboardFile": "Main",
+        "INFOPLIST_KEY_NSPrincipalClass": "NSApplication",
+        "LD_RUNPATH_SEARCH_PATHS": [
+          "$(inherited)",
+          "@executable_path/../Frameworks",
+        ],
+        "MACOSX_DEPLOYMENT_TARGET": "12.0",
+        "MARKETING_VERSION": "1.3",
+        "OTHER_LDFLAGS": [
+          "-framework",
+          "SafariServices",
+          "-framework",
+          "WebKit",
+        ],
+        "PRODUCT_BUNDLE_IDENTIFIER": "$(APP_BUNDLE_ID)",
+        "PRODUCT_NAME": "Cookie Munch",
+        "REGISTER_APP_GROUPS": "YES",
+        "SDKROOT": "macosx",
+        "STRING_CATALOG_GENERATE_SYMBOLS": "YES",
+        "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
+        "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
+        "SWIFT_EMIT_LOC_STRINGS": "YES",
+        "SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY": "YES",
+        "SWIFT_VERSION": "5.0",
+      },
+    }, {
+      "name": "Cookie Munch Extension (iOS)",
+      "id": "E47065DC309A207400370872",
+      "product": "id:E47065DD309A207400370872",
+      "product-type": "app-extension",
+      "build-phases": [
+        "compile-sources",
+        "frameworks",
+        "resources",
+      ],
+      "build-settings": {
+        "APP_BUNDLE_ID": "com.example.CookieMunch",
+        "CODE_SIGN_STYLE": "Automatic",
+        "CURRENT_PROJECT_VERSION": "1",
+        "DEVELOPMENT_TEAM": "",
+        "GENERATE_INFOPLIST_FILE": "YES",
+        "INFOPLIST_FILE": "iOS (Extension)/Info.plist",
+        "INFOPLIST_KEY_CFBundleDisplayName": "Cookie Munch Extension",
+        "INFOPLIST_KEY_NSHumanReadableCopyright": "",
+        "IPHONEOS_DEPLOYMENT_TARGET": "15.0",
+        "LD_RUNPATH_SEARCH_PATHS": [
+          "$(inherited)",
+          "@executable_path/Frameworks",
+          "@executable_path/../../Frameworks",
+        ],
+        "MARKETING_VERSION": "1.3",
+        "OTHER_LDFLAGS": [
+          "-framework",
+          "SafariServices",
+        ],
+        "PRODUCT_BUNDLE_IDENTIFIER": "$(APP_BUNDLE_ID).Extension",
+        "PRODUCT_NAME": "Cookie Munch Extension",
+        "SDKROOT": "iphoneos",
+        "SKIP_INSTALL": "YES",
+        "STRING_CATALOG_GENERATE_SYMBOLS": "YES",
+        "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
+        "SWIFT_EMIT_LOC_STRINGS": "YES",
+        "SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY": "YES",
+        "SWIFT_VERSION": "5.0",
+        "TARGETED_DEVICE_FAMILY": "1,2",
+        "VALIDATE_PRODUCT[config=Release]": "YES",
+      },
+    }, {
+      "name": "Cookie Munch Extension (macOS)",
+      "id": "E47065E6309A207400370872",
+      "product": "id:E47065E7309A207400370872",
+      "product-type": "app-extension",
+      "build-phases": [
+        "compile-sources",
+        "frameworks",
+        "resources",
+      ],
+      "build-settings": {
+        "APP_BUNDLE_ID": "com.example.CookieMunch",
+        "CODE_SIGN_STYLE": "Automatic",
+        "CURRENT_PROJECT_VERSION": "1",
+        "DEVELOPMENT_TEAM": "",
+        "ENABLE_APP_SANDBOX": "YES",
+        "ENABLE_HARDENED_RUNTIME": "YES",
+        "ENABLE_USER_SELECTED_FILES": "readonly",
+        "GENERATE_INFOPLIST_FILE": "YES",
+        "INFOPLIST_FILE": "macOS (Extension)/Info.plist",
+        "INFOPLIST_KEY_CFBundleDisplayName": "Cookie Munch Extension",
+        "INFOPLIST_KEY_NSHumanReadableCopyright": "",
+        "LD_RUNPATH_SEARCH_PATHS": [
+          "$(inherited)",
+          "@executable_path/../Frameworks",
+          "@executable_path/../../../../Frameworks",
+        ],
+        "MACOSX_DEPLOYMENT_TARGET": "12.0",
+        "MARKETING_VERSION": "1.3",
+        "OTHER_LDFLAGS": [
+          "-framework",
+          "SafariServices",
+        ],
+        "PRODUCT_BUNDLE_IDENTIFIER": "$(APP_BUNDLE_ID).Extension",
+        "PRODUCT_NAME": "Cookie Munch Extension",
+        "SDKROOT": "macosx",
+        "SKIP_INSTALL": "YES",
+        "STRING_CATALOG_GENERATE_SYMBOLS": "YES",
+        "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
+        "SWIFT_EMIT_LOC_STRINGS": "YES",
+        "SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY": "YES",
+        "SWIFT_VERSION": "5.0",
+      },
+    },
+  ],
+  "build-settings": {
+    "ALWAYS_SEARCH_USER_PATHS": "NO",
+    "ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS": "YES",
+    "CLANG_ANALYZER_NONNULL": "YES",
+    "CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION": "YES_AGGRESSIVE",
+    "CLANG_CXX_LANGUAGE_STANDARD": "gnu++20",
+    "CLANG_ENABLE_MODULES": "YES",
+    "CLANG_ENABLE_OBJC_ARC": "YES",
+    "CLANG_ENABLE_OBJC_WEAK": "YES",
+    "CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING": "YES",
+    "CLANG_WARN_BOOL_CONVERSION": "YES",
+    "CLANG_WARN_COMMA": "YES",
+    "CLANG_WARN_CONSTANT_CONVERSION": "YES",
+    "CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS": "YES",
+    "CLANG_WARN_DIRECT_OBJC_ISA_USAGE": "YES_ERROR",
+    "CLANG_WARN_DOCUMENTATION_COMMENTS": "YES",
+    "CLANG_WARN_EMPTY_BODY": "YES",
+    "CLANG_WARN_ENUM_CONVERSION": "YES",
+    "CLANG_WARN_INFINITE_RECURSION": "YES",
+    "CLANG_WARN_INT_CONVERSION": "YES",
+    "CLANG_WARN_NON_LITERAL_NULL_CONVERSION": "YES",
+    "CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF": "YES",
+    "CLANG_WARN_OBJC_LITERAL_CONVERSION": "YES",
+    "CLANG_WARN_OBJC_ROOT_CLASS": "YES_ERROR",
+    "CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER": "YES",
+    "CLANG_WARN_RANGE_LOOP_ANALYSIS": "YES",
+    "CLANG_WARN_STRICT_PROTOTYPES": "YES",
+    "CLANG_WARN_SUSPICIOUS_MOVE": "YES",
+    "CLANG_WARN_UNGUARDED_AVAILABILITY": "YES_AGGRESSIVE",
+    "CLANG_WARN_UNREACHABLE_CODE": "YES",
+    "CLANG_WARN__DUPLICATE_METHOD_MATCH": "YES",
+    "COPY_PHASE_STRIP": "NO",
+    "DEBUG_INFORMATION_FORMAT[config=Debug]": "dwarf",
+    "DEBUG_INFORMATION_FORMAT[config=Release]": "dwarf-with-dsym",
+    "ENABLE_NS_ASSERTIONS[config=Release]": "NO",
+    "ENABLE_STRICT_OBJC_MSGSEND": "YES",
+    "ENABLE_TESTABILITY[config=Debug]": "YES",
+    "ENABLE_USER_SCRIPT_SANDBOXING": "YES",
+    "GCC_C_LANGUAGE_STANDARD": "gnu17",
+    "GCC_DYNAMIC_NO_PIC[config=Debug]": "NO",
+    "GCC_NO_COMMON_BLOCKS": "YES",
+    "GCC_OPTIMIZATION_LEVEL[config=Debug]": "0",
+    "GCC_PREPROCESSOR_DEFINITIONS[config=Debug]": [
+      "DEBUG=1",
+      "$(inherited)",
+    ],
+    "GCC_WARN_64_TO_32_BIT_CONVERSION": "YES",
+    "GCC_WARN_ABOUT_RETURN_TYPE": "YES_ERROR",
+    "GCC_WARN_UNDECLARED_SELECTOR": "YES",
+    "GCC_WARN_UNINITIALIZED_AUTOS": "YES_AGGRESSIVE",
+    "GCC_WARN_UNUSED_FUNCTION": "YES",
+    "GCC_WARN_UNUSED_VARIABLE": "YES",
+    "LOCALIZATION_PREFERS_STRING_CATALOGS": "YES",
+    "MTL_ENABLE_DEBUG_INFO[config=Debug]": "INCLUDE_SOURCE",
+    "MTL_ENABLE_DEBUG_INFO[config=Release]": "NO",
+    "MTL_FAST_MATH": "YES",
+    "ONLY_ACTIVE_ARCH[config=Debug]": "YES",
+    "SWIFT_ACTIVE_COMPILATION_CONDITIONS[config=Debug]": "DEBUG $(inherited)",
+    "SWIFT_COMPILATION_MODE[config=Release]": "wholemodule",
+    "SWIFT_OPTIMIZATION_LEVEL[config=Debug]": "-Onone",
+  },
+  "last-upgrade": "27.2",
+  "last-swift-update": "27.2",
+}

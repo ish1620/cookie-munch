@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <link rel="stylesheet" href="../Style.css">
+    <script src="../Script.js" defer></script>
+</head>
+<body>
+    <main>
+        <img class="mascot" src="../Icon.png" width="150" height="150" alt="">
+        <h1>Cookie Munch</h1>
+        <p class="tagline" data-text="tagline">Says no to cookie banners in Safari, and hides the ones it can’t decline. It never clicks Accept.</p>
+
+        <ol class="steps platform-mac">
+            <li data-text="mac1">Open Safari Settings → Extensions.</li>
+            <li data-text="mac2">Tick Cookie Munch.</li>
+            <li data-text="mac3">Click Edit Websites…, then set Other Websites to Allow.</li>
+        </ol>
+        <p class="status platform-mac state-on" data-text="macOn">Cookie Munch is on in Safari.</p>
+        <p class="status platform-mac state-off" data-text="macOff">Cookie Munch is off in Safari right now.</p>
+        <button class="platform-mac open-preferences" data-text="macOpen">Quit and Open Safari Settings…</button>
+
+        <ol class="steps platform-ios">
+            <li data-text="ios1">Open Settings → Apps → Safari → Extensions.</li>
+            <li data-text="ios2">Tap Cookie Munch and turn on Allow Extension.</li>
+            <li data-text="ios3">Under Permissions, set All Websites to Allow.</li>
+        </ol>
+
+        <p class="after" data-text="after">Then browse as usual. Cookie Munch’s button in Safari shows what it did on each page.</p>
+
+        <p class="footer">
+            <a href="https://github.com/ish1620/cookie-munch" data-text="source">Free and open source</a>
+            · <span data-text="private">Sends nothing anywhere</span>
+        </p>
+    </main>
+</body>
+</html>

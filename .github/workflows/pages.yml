@@ -1,0 +1,26 @@
+name: Mock pages (WebKit)
+
+# Runs every mock banner page in WebKit, Safari's engine. macOS runners use more of the free Actions
+# minutes, so this only runs when the extension or the tests change.
+on:
+  push:
+    paths: ["extension/**", "tests/**", "tools/run_pages.swift", ".github/workflows/pages.yml"]
+  pull_request:
+    paths: ["extension/**", "tests/**", "tools/run_pages.swift", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pages:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Serve the repository
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 > /dev/null 2>&1 &
+          for i in 1 2 3 4 5 6 7 8 9 10; do curl -sf http://127.0.0.1:8765/tests/index.html > /dev/null && break; sleep 1; done
+      - name: Run every mock banner page
+        run: swift tools/run_pages.swift

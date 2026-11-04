@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Banner inside an iframe</title>
+<meta name="expect" content="reject">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Banner inside an iframe</h1>
+<p>Expect: the copy of the script running inside the iframe clicks "Reject All".</p>
+<iframe src="iframe-inner.html" title="consent" style="position:fixed;bottom:16px;left:16px;width:520px;height:200px;border:1px solid #ccc;background:#fff"></iframe>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

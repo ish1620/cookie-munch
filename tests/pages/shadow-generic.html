@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Custom element with shadow DOM</title>
+<meta name="expect" content="reject">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Custom element with shadow DOM</h1>
+<p>Expect: clicks "Decline" inside &lt;cookie-notice&gt;'s shadow root.</p>
+<cookie-notice></cookie-notice>
+<script>
+  customElements.define('cookie-notice', class extends HTMLElement {
+    connectedCallback() {
+      this.attachShadow({ mode: 'open' }).innerHTML = `<link rel="stylesheet" href="style.css">
+        <div class="inflow" data-banner>
+          <span>This site uses cookies to measure traffic.</span>
+          <button data-test="accept" data-close>Accept</button>
+          <button data-test="reject" data-close>Decline</button>
+        </div>`;
+    }
+  });
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

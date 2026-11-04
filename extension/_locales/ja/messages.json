@@ -1,0 +1,46 @@
+{
+  "extName": { "message": "Cookie Munch" },
+  "extDescription": { "message": "Cookieバナーを自動で拒否し、拒否できないバナーは隠します。「同意」は押しません。" },
+
+  "checking": { "message": "このページを確認しています…" },
+  "headMunched": { "message": "ごちそうさま。" },
+  "detailRejected": { "message": "このページのCookieバナーで「拒否」を押しました。" },
+  "detailSaved": { "message": "任意のCookieをすべてオフにして保存しました。" },
+  "headHidden": { "message": "隠しました。" },
+  "detailHiddenDecline": { "message": "拒否するボタンがないバナーだったので、見えなくしました。" },
+  "detailHiddenHide": { "message": "このページのCookieバナーを、回答せずに隠しました。" },
+  "headQuiet": { "message": "静かなページです。" },
+  "detailQuiet": { "message": "このページにはまだCookieバナーがありません。" },
+  "headHideMode": { "message": "バナーを隠しています。" },
+  "detailHideMode": { "message": "このページのバナーはCookieリストで隠され、回答はしません。" },
+  "headOff": { "message": "このサイトではオフ。" },
+  "detailOff": { "message": "このサイトには何もしません。" },
+  "headNeedsAccess": { "message": "許可が必要です。" },
+  "detailNeedsAccess": { "message": "Safariの設定 → 機能拡張 → Cookie Munch で、すべてのWebサイトでの使用を許可してください。" },
+  "headNotWeb": { "message": "ここでは使えません。" },
+  "detailNotWeb": { "message": "Cookie MunchはWebページで動きます。" },
+  "headError": { "message": "問題が発生しました。" },
+  "viaPlatform": {
+    "message": "バナー：$PLATFORM$",
+    "placeholders": { "platform": { "content": "$1", "example": "OneTrust" } }
+  },
+
+  "statMunched": { "message": "処理したバナー" },
+  "statTime": { "message": "節約した時間（1件4秒で計算）" },
+  "timeSeconds": { "message": "$N$秒", "placeholders": { "n": { "content": "$1" } } },
+  "timeMinutes": { "message": "$N$分", "placeholders": { "n": { "content": "$1" } } },
+  "timeHours": {
+    "message": "$H$時間$M$分",
+    "placeholders": { "h": { "content": "$1" }, "m": { "content": "$2" } }
+  },
+
+  "siteLabel": { "message": "バナーを処理するサイト" },
+  "modeLegend": { "message": "すべてのサイトで" },
+  "modeDecline": { "message": "拒否する" },
+  "modeHide": { "message": "隠すだけ" },
+  "helpDecline": { "message": "Cookieバナーの「拒否」を押します。拒否できないバナーは隠します。" },
+  "helpHide": { "message": "Braveと同じ方式：バナーを隠し、そのスクリプトの読み込みを止めます。回答はしません。" },
+  "reloadHint": { "message": "ページを再読み込みすると反映されます。" },
+  "report": { "message": "見逃したバナーを報告する" },
+  "reportHint": { "message": "このサイト名と使用環境（モード、バージョン、Mac／iPhone）を入れたGitHubのIssue画面を開きます。送信しない限り、何も送られません。" }
+}

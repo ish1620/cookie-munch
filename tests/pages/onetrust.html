@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OneTrust (known platform)</title>
+<meta name="expect" content="reject">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>OneTrust (known platform)</h1>
+<p>Expect: clicks "Reject All".</p>
+<div id="onetrust-consent-sdk"><div id="onetrust-banner-sdk" class="fixed" data-banner>
+  <p>We use cookies to improve your experience and for marketing. Read our Cookie Policy.</p>
+  <button id="onetrust-pc-btn-handler" data-test="settings">Cookies Settings</button>
+  <button id="onetrust-reject-all-handler" data-test="reject" data-close>Reject All</button>
+  <button id="onetrust-accept-btn-handler" data-test="accept" data-close>Accept All Cookies</button>
+</div></div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

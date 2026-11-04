@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Unknown banner, Japanese</title>
+<meta name="expect" content="reject">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Unknown banner, Japanese</h1>
+<p>Expect: clicks 「拒否する」.</p>
+<div class="z9 fixed" data-banner>
+  <p>当サイトでは、利便性向上とアクセス解析のためにCookieを使用しています。詳しくはプライバシーポリシーをご覧ください。</p>
+  <button data-test="accept" data-close>同意する</button>
+  <button data-test="reject" data-close>拒否する</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

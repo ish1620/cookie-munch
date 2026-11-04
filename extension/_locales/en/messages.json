@@ -1,0 +1,46 @@
+{
+  "extName": { "message": "Cookie Munch" },
+  "extDescription": { "message": "Declines cookie banners for you, and hides the ones it can't decline. Never clicks Accept." },
+
+  "checking": { "message": "Checking this page…" },
+  "headMunched": { "message": "Munched." },
+  "detailRejected": { "message": "Clicked “Reject” on this page’s cookie banner." },
+  "detailSaved": { "message": "Switched optional cookies off and saved." },
+  "headHidden": { "message": "Hidden." },
+  "detailHiddenDecline": { "message": "This banner had no way to say no, so it’s out of sight." },
+  "detailHiddenHide": { "message": "Hid this page’s cookie banner without answering it." },
+  "headQuiet": { "message": "All quiet." },
+  "detailQuiet": { "message": "No cookie banner on this page so far." },
+  "headHideMode": { "message": "Hiding banners." },
+  "detailHideMode": { "message": "Banners on this page are hidden by the cookie list and stay unanswered." },
+  "headOff": { "message": "Off here." },
+  "detailOff": { "message": "Cookie Munch leaves this site alone." },
+  "headNeedsAccess": { "message": "Needs permission." },
+  "detailNeedsAccess": { "message": "In Safari Settings → Extensions → Cookie Munch, allow it on every website." },
+  "headNotWeb": { "message": "Nothing to do here." },
+  "detailNotWeb": { "message": "Cookie Munch works on web pages." },
+  "headError": { "message": "Something went wrong." },
+  "viaPlatform": {
+    "message": "Banner: $PLATFORM$",
+    "placeholders": { "platform": { "content": "$1", "example": "OneTrust" } }
+  },
+
+  "statMunched": { "message": "banners munched" },
+  "statTime": { "message": "time saved, at 4 s each" },
+  "timeSeconds": { "message": "$N$ s", "placeholders": { "n": { "content": "$1" } } },
+  "timeMinutes": { "message": "$N$ min", "placeholders": { "n": { "content": "$1" } } },
+  "timeHours": {
+    "message": "$H$ h $M$ min",
+    "placeholders": { "h": { "content": "$1" }, "m": { "content": "$2" } }
+  },
+
+  "siteLabel": { "message": "Handle banners on" },
+  "modeLegend": { "message": "On every site" },
+  "modeDecline": { "message": "Decline" },
+  "modeHide": { "message": "Hide only" },
+  "helpDecline": { "message": "Clicks “Reject” on cookie banners. Hides the ones that can’t be declined." },
+  "helpHide": { "message": "Like Brave: hides banners and stops their scripts loading. Never answers them." },
+  "reloadHint": { "message": "Reload the page to apply." },
+  "report": { "message": "Missed a banner here? Report it" },
+  "reportHint": { "message": "Opens a GitHub issue with this site’s name and your setup (mode, version, Mac or iPhone) filled in. Nothing is sent unless you submit it." }
+}

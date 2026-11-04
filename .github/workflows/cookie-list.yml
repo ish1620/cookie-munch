@@ -1,0 +1,39 @@
+name: Refresh the cookie list
+
+# Once a week, convert the latest EasyList Cookie List and open a pull request if anything changed.
+# Needs Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests".
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: Download the list
+        run: curl --fail --silent --show-error -o "$RUNNER_TEMP/fanboy-cookiemonster.txt" https://secure.fanboy.co.nz/fanboy-cookiemonster.txt
+      - name: Convert it
+        run: python3 -I tools/build_cookie_rules.py "$RUNNER_TEMP/fanboy-cookiemonster.txt"
+      - name: Check the result
+        run: |
+          python3 -m json.tool extension/cookie-rules.json > /dev/null
+          python3 -m json.tool extension/rules/cookie-scripts.json > /dev/null
+          node tests/check_extension.mjs
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: cookie-list-update
+          commit-message: Update the EasyList Cookie List
+          title: Update the EasyList Cookie List
+          body: |
+            The weekly refresh of `extension/cookie-rules.json` and `extension/rules/cookie-scripts.json`
+            from EasyList's Cookie List. Check the mock pages before merging.
+          labels: cookie list

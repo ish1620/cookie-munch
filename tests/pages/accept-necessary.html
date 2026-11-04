@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Accept-only-necessary wording</title>
+<meta name="expect" content="reject">
+
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Accept-only-necessary wording</h1>
+<p>Expect: clicks "Accept only necessary cookies", never "Accept all cookies".</p>
+<div class="fixed" data-banner>
+  <p>We and our partners use cookies to personalise content and ads.</p>
+  <button data-test="accept" data-close>Accept all cookies</button>
+  <button data-test="reject" data-close>Accept only necessary cookies</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>
