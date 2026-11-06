@@ -8,7 +8,7 @@ cd "${0:A:h}/.."
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
 source tools/signing.sh
 PROJECT="xcode/Cookie Munch/Cookie Munch.xcodeproj"
-BUILT="xcode/build/Build/Products/Debug-iphoneos/Cookie Munch.app"
+BUILT="xcode/build.noindex/Build/Products/Debug-iphoneos/Cookie Munch.app"
 LIST="$(mktemp -t devices).json"
 
 device="${1:-}"
@@ -29,10 +29,12 @@ fi
 
 echo "Building for $device…"
 xcodebuild -project "$PROJECT" -scheme "Cookie Munch (iOS)" -configuration Debug \
-  -destination "id=$device" -derivedDataPath xcode/build \
+  -destination "id=$device" -derivedDataPath xcode/build.noindex \
   -allowProvisioningUpdates -allowProvisioningDeviceRegistration -quiet "${SIGNING_SETTINGS[@]}" build
 
 echo "Installing…"
 xcrun devicectl device install app --device "$device" "$BUILT" >/dev/null
+# Building registers the build folder's copy as an app on this Mac too; forget it so it isn't listed twice.
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u "$BUILT" 2>/dev/null || true
 xcrun devicectl device process launch --device "$device" "$APP_BUNDLE_ID" >/dev/null
 echo "Installed and opened Cookie Munch on your iPhone."

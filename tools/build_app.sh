@@ -7,13 +7,15 @@ cd "${0:A:h}/.."
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
 source tools/signing.sh
 PROJECT="xcode/Cookie Munch/Cookie Munch.xcodeproj"
-BUILT="xcode/build/Build/Products/Release/Cookie Munch.app"
+# The build folder ends in .noindex so Spotlight skips it, and its copy of the app
+# doesn't show up next to the installed one.
+BUILT="xcode/build.noindex/Build/Products/Release/Cookie Munch.app"
 INSTALLED="/Applications/Cookie Munch.app"
 LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
 
 echo "Building…"
 xcodebuild -project "$PROJECT" -scheme "Cookie Munch (macOS)" -configuration Release \
-  -derivedDataPath xcode/build -allowProvisioningUpdates -quiet "${SIGNING_SETTINGS[@]}" build
+  -derivedDataPath xcode/build.noindex -allowProvisioningUpdates -quiet "${SIGNING_SETTINGS[@]}" build
 
 # Replace the installed copy.
 pkill -x "Cookie Munch" 2>/dev/null || true

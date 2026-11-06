@@ -1,5 +1,6 @@
 # Build output
 xcode/build/
+xcode/build.noindex/
 DerivedData/
 
 # Xcode per-user state

@@ -110,7 +110,7 @@ See the README for the one-time Xcode setup (`signing.local`). Then:
 - `tools/install_iphone.sh` builds the iPhone app and installs it on a connected or nearby phone.
 
 If a build fails with `Embedded binary is not signed with the same certificate as the parent app`, delete
-`xcode/build` and run the script again.
+`xcode/build.noindex` and run the script again.
 
 ## Updating the cookie list
 
