@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings with toggle buttons</title>
+<meta name="expect" content="settings,analytics,marketing,save">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="saved with optional cookies off">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings with toggle buttons</h1>
+<p>Expect: opens "Manage preferences", presses Analytics and Marketing (toggle buttons with
+aria-pressed="true") to turn them off, clicks "Save my choices". It leaves alone the locked "Strictly
+necessary", the "Functional" one that is already off, and the pressed "Preferences" tab, whose label is
+a settings label.</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <div><button aria-pressed="true" data-test="preferences-tab">Preferences</button>
+       <button aria-pressed="false" data-test="vendors-tab">Vendors</button></div>
+  <p>Choose which cookies we may use:</p>
+  <div><button aria-pressed="true" aria-disabled="true" data-test="necessary">Strictly necessary</button>
+       <button aria-pressed="false" data-test="functional">Functional</button>
+       <button aria-pressed="true" data-test="analytics">Analytics</button>
+       <span role="button" tabindex="0" aria-pressed="true" data-test="marketing">Marketing</span></div>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="save" data-close>Save my choices</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

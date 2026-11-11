@@ -18,3 +18,8 @@ art/cookie-munch-clean.png
 __pycache__/
 *.log
 dist/
+
+# Live-site tests (npm ci installs Playwright; its runner output folders)
+node_modules/
+test-results/
+playwright-report/

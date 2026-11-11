@@ -1,10 +1,12 @@
 // Test harness: stands in for Safari's extension APIs and the background script,
-// makes the mock banners behave (close, open settings, flip switches), and
+// makes the mock banners behave (close, open settings, flip switches and toggle buttons), and
 // records every click. Load it before content.js on each test page.
 //
 // Page options, as <meta name="..." content="...">:
 //   expect          the clicks that should happen, comma-separated ("" = none)
 //   expect-hidden   "yes": every [data-banner] must end up hidden
+//   expect-report   what the popup must be told, as the "how" of each "declined" message,
+//                   comma-separated (for example "hidden")
 //   mode            "hide" for Hide-only mode (default: decline)
 //   disabled-sites  sites switched off in the popup
 //   site-rules      extra list selectors for this test site, comma-separated
@@ -68,6 +70,8 @@ document.addEventListener('click', (event) => {
   if (!target.closest) return;
   const toggle = target.closest('[role="switch"]');
   if (toggle) toggle.setAttribute('aria-checked', String(toggle.getAttribute('aria-checked') !== 'true'));
+  const pressable = target.closest('[aria-pressed]');
+  if (pressable) pressable.setAttribute('aria-pressed', String(pressable.getAttribute('aria-pressed') !== 'true'));
   const opener = target.closest('[data-open]');
   if (opener) {
     opener.closest('[data-banner]').hidden = true;
@@ -84,8 +88,8 @@ function allElements(doc, selector) {
 }
 
 function toggleStates(doc) {
-  return allElements(doc, 'input[type="checkbox"], [role="switch"]')
-    .map((box) => `${box.dataset.test}=${box.type === 'checkbox' ? box.checked : box.getAttribute('aria-checked')}`)
+  return allElements(doc, 'input[type="checkbox"], [role="switch"], [aria-pressed]')
+    .map((box) => `${box.dataset.test}=${box.type === 'checkbox' ? box.checked : box.getAttribute('aria-checked') ?? box.getAttribute('aria-pressed')}`)
     .join(' ');
 }
 
@@ -103,15 +107,20 @@ window.__result = () => {
   const scrollLocked = [document.documentElement, document.body]
     .some((el) => getComputedStyle(el).overflow.includes('hidden')) || getComputedStyle(document.body).position === 'fixed';
   const expectHidden = meta('expect-hidden') === 'yes';
+  const messages = wins.flatMap((w) => w.__messages ?? []);
+  const report = messages.filter((m) => m.type === 'declined').map((m) => m.how).join(',');
+  const expectReport = meta('expect-report');
   return {
     page: location.pathname.split('/').pop(),
-    pass: clicks === expect && (!expectHidden || bannersLeft === 0) && notKept === 0 && !scrollLocked,
+    pass: clicks === expect && (!expectHidden || bannersLeft === 0) && notKept === 0 && !scrollLocked &&
+      (expectReport === undefined || report === expectReport),
     expect,
     clicks,
     bannersLeft,
     notKept,
     scrollLocked,
     toggles: toggleStates(document),
-    messages: wins.flatMap((w) => w.__messages ?? []).map((m) => m.type + (m.how ? `:${m.how}` : '')).join(' '),
+    report,
+    messages: messages.map((m) => m.type + (m.how ? `:${m.how}` : '')).join(' '),
   };
 };

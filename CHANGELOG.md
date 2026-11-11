@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- A settings panel whose switches Cookie Munch can't turn off is no longer saved with the site's defaults.
+  The banner is hidden instead, and the popup says it was hidden.
+- Settings panels that use toggle buttons (`aria-pressed`) are now switched off and saved.
+- Tests: each mock page is judged once, after the extension stops watching it, so a late wrong click fails.
+  Two new pages cover settings panels.
+- The weekly cookie-list pull request starts its own checks.
+- Tests: `npm run test:live` checks real EU sites from your own Mac and judges each by the consent record
+  the site wrote, not by its banner going away.
+
 ## 1.3.0 — 2026-11-04
 
 First public version.

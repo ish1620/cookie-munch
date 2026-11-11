@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings with switches it can't read</title>
+<meta name="expect" content="settings">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="hidden">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings with switches it can't read</h1>
+<p>Expect: opens "Manage preferences", then clicks nothing more. The switches are plain elements, not
+checkboxes or switches, so it can't turn them off. Saving would keep the site's defaults (on), so the
+panel is hidden instead and the popup is told "hidden".</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <div>Analytics <span class="switch on" tabindex="0" data-test="analytics">On</span></div>
+  <div>Marketing <span class="switch on" tabindex="0" data-test="marketing">On</span></div>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="save" data-close>Save my choices</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

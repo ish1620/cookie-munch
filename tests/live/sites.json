@@ -1,0 +1,51 @@
+[
+  {
+    "name": "IKEA (Spanish)",
+    "url": "https://www.ikea.com/es/es/",
+    "platform": "OneTrust",
+    "record": "onetrust",
+    "kind": "shop"
+  },
+  {
+    "name": "Vinted (Spanish)",
+    "url": "https://www.vinted.es/",
+    "platform": "OneTrust with IAB TCF",
+    "record": "tcf",
+    "kind": "shop (second-hand marketplace)"
+  },
+  {
+    "name": "Copenhagen Business School (English)",
+    "url": "https://www.cbs.dk/en",
+    "platform": "Cookiebot",
+    "record": "cookiebot",
+    "kind": "public university"
+  },
+  {
+    "name": "Euronews (English)",
+    "url": "https://www.euronews.com/",
+    "platform": "Didomi with IAB TCF",
+    "record": "tcf",
+    "kind": "news"
+  },
+  {
+    "name": "SNCF Connect (French)",
+    "url": "https://www.sncf-connect.com/",
+    "platform": "Didomi with IAB TCF",
+    "record": "tcf",
+    "kind": "public service (railways)"
+  },
+  {
+    "name": "Vinted (French)",
+    "url": "https://www.vinted.fr/",
+    "platform": "OneTrust with IAB TCF",
+    "record": "tcf",
+    "kind": "shop (second-hand marketplace)"
+  },
+  {
+    "name": "Sony (Japanese site, English banner)",
+    "url": "https://www.sony.co.jp/",
+    "platform": "OneTrust",
+    "record": "onetrust",
+    "kind": "electronics; visitors from the EU get its banner in English, whatever the browser's language"
+  }
+]

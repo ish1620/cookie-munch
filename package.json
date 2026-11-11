@@ -1,0 +1,11 @@
+{
+  "name": "cookie-munch-tests",
+  "private": true,
+  "description": "Test tools for Cookie Munch. The extension itself has no dependencies.",
+  "scripts": {
+    "test:live": "node tests/live/run_live.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.65.0"
+  }
+}

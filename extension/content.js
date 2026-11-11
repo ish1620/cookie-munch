@@ -9,7 +9,8 @@
  *   2. Any button whose label means "reject" in one of several languages, as long
  *      as it sits inside something that looks like a cookie banner.
  *   3. If the banner only offers "Accept" and "Settings": open the settings,
- *      switch every optional category off, and save.
+ *      switch every optional category off, and save. If the settings have no
+ *      switch it can turn off, it saves nothing and leaves the banner to step 4.
  *   A few seconds in, whatever couldn't be declined is hidden (step 4).
  *
  * Hide only (like Brave): never answer the banner, just hide it, using
@@ -192,6 +193,7 @@
 
   const CLICKABLE = 'button, [role="button"], input[type="button"], input[type="submit"], a, [onclick], [tabindex], [class*="btn" i], [class*="button" i]';
   const TOGGLES = 'input[type="checkbox"], [role="switch"], [role="checkbox"]';
+  const TOGGLE_BUTTONS = 'button[aria-pressed], [role="button"][aria-pressed]'; // pressed = on
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -312,9 +314,24 @@
     return wholePageIsConsent() ? document.body : null;
   }
 
-  function hasToggles(banner) {
-    return allRoots(banner).some((root) => root.querySelector(TOGGLES));
+  // The banner's category switches: checkboxes, switches, and toggle buttons. A toggle button
+  // labelled like one of the banner's own buttons (Accept, Save, Settings, Reject) is not a switch.
+  function switchesIn(banner) {
+    return allRoots(banner)
+      .flatMap((root) => [...root.querySelectorAll(`${TOGGLES}, ${TOGGLE_BUTTONS}`)])
+      .filter((box) => !box.matches(TOGGLE_BUTTONS) || !kindOf(box));
   }
+
+  function isOn(box) {
+    if (box instanceof HTMLInputElement) return box.checked;
+    return box.getAttribute(box.matches(TOGGLES) ? 'aria-checked' : 'aria-pressed') === 'true';
+  }
+
+  const isLocked = (box) =>
+    box.disabled || box.getAttribute('aria-disabled') === 'true' || box.hasAttribute('readonly');
+
+  const hasToggles = (banner) => switchesIn(banner).length > 0;
+  const canSwitchOff = (banner) => switchesIn(banner).some((box) => !isLocked(box));
 
   // When a button and an element inside it both match, keep the inner one.
   const innermost = (list) => list.filter((a) => !list.some((b) => b !== a && a.el.contains(b.el)));
@@ -417,14 +434,10 @@
 
   function switchOffAndSave(save) {
     let switched = 0;
-    for (const root of allRoots(save.banner)) {
-      for (const box of root.querySelectorAll(TOGGLES)) {
-        const on = box instanceof HTMLInputElement ? box.checked : box.getAttribute('aria-checked') === 'true';
-        const locked = box.disabled || box.getAttribute('aria-disabled') === 'true' || box.hasAttribute('readonly');
-        if (on && !locked) {
-          box.click();
-          switched++;
-        }
+    for (const box of switchesIn(save.banner)) {
+      if (isOn(box) && !isLocked(box)) {
+        box.click();
+        switched++;
       }
     }
     log(`switched off ${switched} optional categories`);
@@ -599,8 +612,11 @@
       }
     }
 
-    if (stage === 'settings' && now - settingsOpenedAt >= 1000 && found.save.length) {
-      return switchOffAndSave(found.save[0]);
+    // Save only if the settings have a switch it can turn off; saving without one would keep the
+    // site's defaults. Otherwise the banner stays in this stage and the hide step hides it.
+    if (stage === 'settings' && now - settingsOpenedAt >= 1000) {
+      const save = found.save.find((item) => canSwitchOff(item.banner));
+      if (save) return switchOffAndSave(save);
     }
   }
 

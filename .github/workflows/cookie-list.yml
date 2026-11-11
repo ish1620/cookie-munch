@@ -10,6 +10,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 jobs:
   refresh:
@@ -29,6 +30,7 @@ jobs:
           python3 -m json.tool extension/rules/cookie-scripts.json > /dev/null
           node tests/check_extension.mjs
       - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        id: pull-request
         with:
           branch: cookie-list-update
           commit-message: Update the EasyList Cookie List
@@ -37,3 +39,11 @@ jobs:
             The weekly refresh of `extension/cookie-rules.json` and `extension/rules/cookie-scripts.json`
             from EasyList's Cookie List. Check the mock pages before merging.
           labels: cookie list
+      # A pull request opened with this workflow's token doesn't start other workflows, so start them here.
+      - name: Start the checks on the pull request
+        if: steps.pull-request.outputs.pull-request-operation == 'created' || steps.pull-request.outputs.pull-request-operation == 'updated'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run checks.yml --ref cookie-list-update
+          gh workflow run pages.yml --ref cookie-list-update

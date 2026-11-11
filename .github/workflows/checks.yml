@@ -3,6 +3,7 @@ name: Checks
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,10 +17,12 @@ jobs:
         with:
           node-version: 22
       - name: JavaScript syntax
-        run: for file in extension/*.js tests/harness.js tests/*.mjs; do node --check "$file"; done
+        run: |
+          shopt -s nullglob # a folder with no .mjs files adds nothing to the list
+          for file in extension/*.js tests/harness.js tests/*.mjs tests/live/*.js tests/live/*.mjs tools/*.mjs; do node --check "$file"; done
       - name: JSON files
         run: |
-          for file in extension/manifest.json extension/cookie-rules.json extension/rules/*.json extension/_locales/*/messages.json; do
+          for file in extension/manifest.json extension/cookie-rules.json extension/rules/*.json extension/_locales/*/messages.json tests/live/sites.json; do
             python3 -m json.tool "$file" > /dev/null
           done
       - name: Button labels
