@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings that lose their Save button</title>
+<meta name="expect" content="settings,legit-tab,li-1,li-2">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="hidden">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings that lose their Save button</h1>
+<p>Expect: opens "Manage preferences", opens the "Legitimate Interest" tab, switches both purposes off,
+then clicks nothing more. Opening the tab takes "Save &amp; Exit" away, and a new one only comes back 4
+seconds later. With no Save button to click after the legitimate-interest step, it gives up on this
+page: the late Save is not clicked, the panel is hidden instead and the popup is told "hidden".</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <div><div role="tab" data-test="consent-tab">User Consent</div>
+       <div role="tab" data-test="legit-tab">Legitimate Interest</div></div>
+  <p>Choose which cookies we and our partners may use.</p>
+  <div id="legit-view"></div>
+  <button data-test="save" data-close>Save &amp; Exit</button>
+  <button data-test="accept" data-close>Accept all</button>
+</div>
+<script>
+  const DRAW_MS = 400;       // the view is drawn a moment after the click, as in a real panel
+  const SAVE_BACK_MS = 4000; // before leftovers are hidden (about 10 s in), with room for a slow run
+  document.querySelector('[data-test="legit-tab"]').addEventListener('click', () => {
+    const save = document.querySelector('[data-test="save"]');
+    const lateSave = save.cloneNode(true); // a new node: not the button that was there before
+    save.remove();
+    setTimeout(() => {
+      document.getElementById('legit-view').innerHTML = `
+        Advertising <button role="switch" aria-checked="true" data-test="li-1">on</button>
+        Measurement <button role="switch" aria-checked="true" data-test="li-2">on</button>`;
+    }, DRAW_MS);
+    setTimeout(() => document.getElementById('panel').append(lateSave), SAVE_BACK_MS);
+  }, { once: true });
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

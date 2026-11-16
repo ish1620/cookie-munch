@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings whose switches wrap a checkbox</title>
+<meta name="expect" content="settings,analytics-input,marketing-input,save">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="saved with optional cookies off">
+<link rel="stylesheet" href="style.css">
+<style>.el-switch__input { position: absolute; width: 0; height: 0; opacity: 0; margin: 0; }</style>
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings whose switches wrap a checkbox</h1>
+<p>Expect: opens "Manage preferences", clicks the checkbox inside the Analytics and the Marketing switch,
+once each, and clicks "Save my choices". It leaves the locked "Strictly necessary" switch alone.</p>
+<p>This is Element UI's switch: an element with role="switch" around the real checkbox, which is a switch
+too. The two are one switch. A click on either reaches the outer one's handler, which flips the value it
+drew last and draws the new one a moment later, so a second click right after the first would not undo it,
+but one after the redraw would.</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <p>Choose which cookies we and our partners may use.</p>
+  <div>Strictly necessary
+    <div class="el-switch is-checked is-disabled" role="switch" aria-checked="true" aria-disabled="true" data-test="necessary"><input class="el-switch__input" type="checkbox" disabled data-test="necessary-input"><span class="el-switch__core">on</span></div></div>
+  <div>Analytics
+    <div class="el-switch is-checked" role="switch" aria-checked="true" data-test="analytics"><input class="el-switch__input" type="checkbox" data-test="analytics-input"><span class="el-switch__core">on</span></div></div>
+  <div>Marketing
+    <div class="el-switch is-checked" role="switch" aria-checked="true" data-test="marketing"><input class="el-switch__input" type="checkbox" data-test="marketing-input"><span class="el-switch__core">on</span></div></div>
+  <button data-test="save" data-close>Save my choices</button>
+  <button data-test="accept" data-close>Accept all</button>
+</div>
+<script>
+  // The harness flips aria-checked on every click of a switch; each redraw here draws over that.
+  for (const wrapper of document.querySelectorAll('.el-switch')) {
+    const input = wrapper.querySelector('input');
+    let value = true; // the real state
+    let drawn = true; // the state drawn last
+    const draw = () => {
+      drawn = value;
+      wrapper.setAttribute('aria-checked', String(drawn));
+      wrapper.classList.toggle('is-checked', drawn);
+      input.checked = drawn;
+    };
+    wrapper.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (!input.disabled) value = !drawn;
+      queueMicrotask(draw);
+    });
+    draw();
+  }
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

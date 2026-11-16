@@ -9,8 +9,10 @@
  *   2. Any button whose label means "reject" in one of several languages, as long
  *      as it sits inside something that looks like a cookie banner.
  *   3. If the banner only offers "Accept" and "Settings": open the settings,
- *      switch every optional category off, and save. If the settings have no
- *      switch it can turn off, it saves nothing and leaves the banner to step 4.
+ *      switch every optional category off, open the "Legitimate interest" view
+ *      if there is one and object to everything in it, and save. If the settings
+ *      have no switch it can turn off and no such view, it saves nothing and
+ *      leaves the banner to step 4.
  *   A few seconds in, whatever couldn't be declined is hidden (step 4).
  *
  * Hide only (like Brave): never answer the banner, just hide it, using
@@ -30,6 +32,10 @@
   const HEARTBEAT_MS = 1000;       // also scan on a timer (changes inside shadow DOM don't reach the observer)
   const SETTINGS_AFTER_MS = 1500;  // a banner with no reject button must sit this long before we open its settings
   const VERIFY_AFTER_MS = 1500;    // after a click, check the button went away
+  const LEGIT_VIEW_MS = 1000;      // after opening a settings panel's "Legitimate interest" view, wait for it to be drawn
+  const OBJECT_REDRAW_MS = 300;    // after "Object all" in that view, wait for its switches to be redrawn
+  const SWITCH_REDRAW_MS = 100;    // after clicking a switch, wait for the panel to redraw before reading the next one,
+  const MAX_SWITCH_WAITS = 20;     // for this many clicks in one go (a long list is not held up for longer)
   const MAX_CLICKS = 4;            // give up after this many tries on one page
   const MAX_BANNER_TEXT = 8000;    // a "banner" with more text than this is probably the whole page
   const HIDE_AFTER_MS = 4000;      // Decline mode: hide what's left this long after the page is shown,
@@ -164,6 +170,19 @@
     /^(cookie|クッキー)?(の)?(設定|詳細設定|カスタマイズ|管理|設定を変更|設定を管理|設定する)$/,
   ];
 
+  // The settings flow's legitimate-interest step (English only for now). LEGIT opens the view
+  // that lists the purposes a site claims a "legitimate interest" for, which are on until
+  // objected to; OBJECT objects to all of them. "Object to all" alone is a REJECT label.
+  const LEGIT = [
+    /^legitimate interests?$/,
+    /^legitimate interest purposes$/,
+  ];
+
+  const OBJECT = [
+    /^object all$/,
+    /^object to (all )?legitimate interests?$/,
+  ];
+
   // Only used to notice that a banner is showing. Never clicked.
   const ACCEPT = [
     /^(accept|agree|allow|ok|okay|got it|i agree|i accept|yes|understood|i understand|consent|continue)( all| everything)?( cookies)?( (and )?(close|continue))?$/,
@@ -182,8 +201,11 @@
   ];
 
   const combine = (list) => new RegExp(list.map((re) => `(?:${re.source})`).join('|'), 'u');
-  const LABELS = { reject: combine(REJECT), save: combine(SAVE), settings: combine(SETTINGS), accept: combine(ACCEPT) };
-  const KINDS = ['reject', 'save', 'settings', 'accept']; // checked in this order
+  const LABELS = {
+    reject: combine(REJECT), object: combine(OBJECT), legit: combine(LEGIT),
+    save: combine(SAVE), settings: combine(SETTINGS), accept: combine(ACCEPT),
+  };
+  const KINDS = ['reject', 'object', 'legit', 'save', 'settings', 'accept']; // checked in this order
 
   // Text that tells us an element is a cookie banner. Needs a cookie/consent
   // word plus some privacy-ish context, so a "Cookie party" invite doesn't count.
@@ -192,8 +214,10 @@
   const CONSENT_ATTR = /cookie|consent|gdpr|ccpa|cmp|privacy|truste|onetrust|didomi|usercentrics|cybot|osano|iubenda|termly|klaro|borlabs|axeptio/i;
 
   const CLICKABLE = 'button, [role="button"], input[type="button"], input[type="submit"], a, [onclick], [tabindex], [class*="btn" i], [class*="button" i]';
+  const LEGIT_OPENER = `${CLICKABLE}, [role="tab"]`; // the "Legitimate interest" view can be a tab
   const TOGGLES = 'input[type="checkbox"], [role="switch"], [role="checkbox"]';
   const TOGGLE_BUTTONS = 'button[aria-pressed], [role="button"][aria-pressed]'; // pressed = on
+  const SWITCHES = `${TOGGLES}, ${TOGGLE_BUTTONS}`;
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -315,11 +339,32 @@
   }
 
   // The banner's category switches: checkboxes, switches, and toggle buttons. A toggle button
-  // labelled like one of the banner's own buttons (Accept, Save, Settings, Reject) is not a switch.
+  // labelled like one of the banner's own buttons (any kind in KINDS: Reject, Object all,
+  // Legitimate interest, Save, Settings, Accept) is not a switch. A switch that holds other
+  // switches is one switch, the outer one: what is inside it is a part of it.
   function switchesIn(banner) {
     return allRoots(banner)
-      .flatMap((root) => [...root.querySelectorAll(`${TOGGLES}, ${TOGGLE_BUTTONS}`)])
+      .flatMap((root) => [...root.querySelectorAll(SWITCHES)])
+      .filter((box) => !isPart(box))
       .filter((box) => !box.matches(TOGGLE_BUTTONS) || !kindOf(box));
+  }
+
+  // True for a switch inside another switch, also through a shadow root (Ionic's ion-toggle
+  // keeps a checkbox in its own).
+  function isPart(box) {
+    for (let node = parentOf(box); node; node = parentOf(node)) {
+      if (node.matches(SWITCHES)) return true;
+    }
+    return false;
+  }
+
+  // What to click to turn a switch off: the switch itself, unless it holds other switches.
+  // Drawn as an "Off" and an "On" half (Sourcepoint's pm-toggle), only a click on a half does
+  // anything: there it is the half with the class "off". Around a single one, usually the real
+  // checkbox (Element UI's el-switch), it is that one: its click reaches the outer switch too.
+  function offPartOf(box) {
+    const parts = [...box.querySelectorAll(SWITCHES)];
+    return parts.find((part) => part.classList.contains('off')) ?? (parts.length === 1 ? parts[0] : box);
   }
 
   function isOn(box) {
@@ -360,7 +405,7 @@
   }
 
   function findLabelled(roots) {
-    const found = { reject: [], save: [], settings: [], accept: [] };
+    const found = Object.fromEntries(KINDS.map((kind) => [kind, []]));
     const seen = new Set();
     for (const root of roots) {
       for (const el of root.querySelectorAll(CLICKABLE)) {
@@ -377,6 +422,18 @@
     return found;
   }
 
+  // One kind of button inside one banner: visible, not clicked yet, and not leaving the page.
+  function controlsIn(banner, kind, selector = CLICKABLE) {
+    const list = allRoots(banner)
+      .flatMap((root) => [...root.querySelectorAll(selector)])
+      .filter((el) => !tried.has(el) && kindOf(el) === kind && isVisible(el) && !leavesPage(el))
+      .map((el) => ({ el }));
+    return innermost(list).map((item) => item.el);
+  }
+
+  // The banner's "Legitimate interest" tab or button, if it has one that wasn't clicked yet.
+  const legitOpenerIn = (banner) => controlsIn(banner, 'legit', LEGIT_OPENER)[0] ?? null;
+
   // ---------------------------------------------------------------------------
   // Acting
   // ---------------------------------------------------------------------------
@@ -387,6 +444,8 @@
   let settingsOpenedAt = 0;
   let waitUntil = 0;
   let reported = null;        // what the background script was told: null, 'hidden', or a decline
+  let legitDone = false;      // the legitimate-interest step ran on this page; it runs once
+  let gaveUp = false;         // that step left no Save button: nothing more is switched or saved here
   let loadedAt = document.readyState === 'complete' ? 0 : null;
   addEventListener('load', () => { loadedAt = Date.now(); }, { once: true });
 
@@ -432,18 +491,65 @@
     }, VERIFY_AFTER_MS);
   }
 
-  function switchOffAndSave(save) {
+  const pause = (ms) => new Promise((done) => setTimeout(done, ms));
+
+  // Turn off every switch in the banner that is on and not locked. Resolves to how many. One
+  // switch can change others (a "toggle all"), and a panel may draw that a moment later: so after
+  // a click it waits before it reads the next switch, or one still drawn as on would be clicked
+  // and switched back on.
+  async function switchOff(banner) {
     let switched = 0;
-    for (const box of switchesIn(save.banner)) {
+    for (const box of switchesIn(banner)) {
       if (isOn(box) && !isLocked(box)) {
-        box.click();
+        offPartOf(box).click();
         switched++;
+        if (switched <= MAX_SWITCH_WAITS) await pause(SWITCH_REDRAW_MS);
       }
     }
-    log(`switched off ${switched} optional categories`);
+    return switched;
+  }
+
+  // Switch every optional category off, then save. If the banner has a "Legitimate interest"
+  // view, open it first and object to everything there: those purposes are on until objected to.
+  // That step clicks only the view's opener, "Object all" buttons and switches that are on. Like
+  // the switches, they don't count toward MAX_CLICKS; instead the step runs once per page, and
+  // when it leaves no Save button to click, nothing more is switched or saved on this page.
+  async function switchOffAndSave(save) {
+    if (gaveUp) return;
+    const how = 'saved with optional cookies off';
+    const { banner } = save;
     const previous = stage;
-    stage = 'verifying';
-    setTimeout(() => finish(save.el, null, 'saved with optional cookies off', previous), 300);
+    stage = 'verifying'; // until finish() or the give-up below: scan() does nothing meanwhile
+    let switched = await switchOff(banner);
+    const opener = legitDone ? null : legitOpenerIn(banner);
+    if (!opener) {
+      log(`switched off ${switched} optional categories`);
+      await pause(300);
+      return finish(save.el, null, how, previous);
+    }
+    legitDone = true;
+    tried.add(opener);
+    opener.click();
+    log('opened the legitimate interest view');
+    await pause(LEGIT_VIEW_MS);
+    const objections = controlsIn(banner, 'object'); // found once: a redrawn button isn't clicked again
+    for (const button of objections) {
+      tried.add(button);
+      button.click();
+      log(`objected: clicked "${(button.textContent || button.value || button.getAttribute('aria-label') || '').trim()}"`);
+    }
+    // "Object all" may redraw the view's switches a moment later: read them after that, or one
+    // still drawn as on would be clicked and switched back on.
+    await pause(OBJECT_REDRAW_MS);
+    switched += await switchOff(banner);
+    log(`switched off ${switched} optional categories`);
+    await pause(300);
+    // The view may have redrawn the panel, so click the Save button that is there now.
+    const [saveNow] = controlsIn(banner, 'save');
+    if (saveNow) return finish(saveNow, null, how, previous);
+    log('no save button after the legitimate interest view, leaving the banner to be hidden');
+    gaveUp = true;
+    stage = previous;
   }
 
   // ---------------------------------------------------------------------------
@@ -476,10 +582,12 @@
       !banner.querySelector('main, article, nav, input[type="password"], input[type="search"]');
   }
 
-  // Hide banners that the label search found (ones the list may not know about).
+  // Hide banners that the label search found (ones the list may not know about). Only the
+  // buttons a banner's first layer has mark one: not the settings flow's legitimate-interest labels.
+  const BANNER_KINDS = ['reject', 'save', 'settings', 'accept'];
   function hideBanners(found) {
     let count = 0;
-    for (const { banner } of KINDS.flatMap((kind) => found[kind])) {
+    for (const { banner } of BANNER_KINDS.flatMap((kind) => found[kind])) {
       if (hiddenBanners.has(banner) || !safeToHide(banner)) continue;
       hiddenBanners.add(banner);
       banner.style.setProperty('display', 'none', 'important');
@@ -569,6 +677,9 @@
     setTimeout(unlockScroll, 1500);
   }
 
+  // Start switching off and saving; a failure in it is logged as a failed scan is.
+  const saveSettings = (save) => { switchOffAndSave(save).catch((error) => log('saving the settings failed', error)); };
+
   function scan() {
     if (stopped || stage === 'done' || stage === 'verifying') return;
     const now = Date.now();
@@ -600,7 +711,7 @@
     if (stage === 'looking' && now - bannerSeenAt >= SETTINGS_AFTER_MS) {
       // Some banners show the category switches right away, next to a "Save" button.
       const save = found.save.find((item) => hasToggles(item.banner));
-      if (save) return switchOffAndSave(save);
+      if (save) return saveSettings(save);
       const settings = found.settings[0];
       if (settings) {
         log('no reject button, opening the banner settings');
@@ -612,11 +723,12 @@
       }
     }
 
-    // Save only if the settings have a switch it can turn off; saving without one would keep the
-    // site's defaults. Otherwise the banner stays in this stage and the hide step hides it.
+    // Save only if the settings have a switch it can turn off or a "Legitimate interest" view
+    // not opened yet to object in; saving without either would keep the site's defaults.
+    // Otherwise the banner stays in this stage and the hide step hides it.
     if (stage === 'settings' && now - settingsOpenedAt >= 1000) {
-      const save = found.save.find((item) => canSwitchOff(item.banner));
-      if (save) return switchOffAndSave(save);
+      const save = found.save.find((item) => canSwitchOff(item.banner) || (!legitDone && legitOpenerIn(item.banner)));
+      if (save) return saveSettings(save);
     }
   }
 

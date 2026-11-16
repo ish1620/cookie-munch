@@ -47,5 +47,21 @@
     "platform": "OneTrust",
     "record": "onetrust",
     "kind": "electronics; visitors from the EU get its banner in English, whatever the browser's language"
+  },
+  {
+    "name": "Mirror (English)",
+    "url": "https://www.mirror.co.uk/",
+    "platform": "InMobi with IAB TCF",
+    "record": "tcf",
+    "legitimateInterest": "judged",
+    "kind": "news; no reject button, so its settings are saved"
+  },
+  {
+    "name": "The Sun (English)",
+    "url": "https://www.thesun.co.uk/",
+    "platform": "Sourcepoint with IAB TCF",
+    "record": "tcf",
+    "legitimateInterest": "judged",
+    "kind": "news; no reject button on the first layer, so its settings are opened; the panel's Reject All may decline it there"
   }
 ]

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings whose switches are an "Off" and an "On" half</title>
+<meta name="expect" content="settings,legit-tab,li-1-off,li-2-off,save">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="saved with optional cookies off">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings whose switches are an "Off" and an "On" half</h1>
+<p>Expect: opens "Manage preferences", opens the "Legitimate Interest" tab, clicks the "Off" half of both
+switches there, and clicks "Save &amp; Exit". It clicks neither the switches themselves nor their "On"
+halves.</p>
+<p>This is the other switch Sourcepoint's panel can have: a button with role="switch" that holds an "Off"
+and an "On" half, each a switch too, and all three say aria-checked="true". A click on the button itself
+does nothing; "Off" turns the switch off and "On" turns it on, a moment after the click.</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <div><div role="tab" data-test="consent-tab">User Consent</div>
+       <div role="tab" data-test="legit-tab" data-view="legit-view">Legitimate Interest</div></div>
+  <p>Choose which cookies we and our partners may use.</p>
+  <template id="legit-view">
+    <div>Advertising
+      <button class="pm-toggle" role="switch" aria-checked="true" data-test="li-1"><span class="off" role="switch" aria-checked="true" data-test="li-1-off">Off</span><span class="on" role="switch" aria-checked="true" data-test="li-1-on">On</span></button>
+      Measurement
+      <button class="pm-toggle" role="switch" aria-checked="true" data-test="li-2"><span class="off" role="switch" aria-checked="true" data-test="li-2-off">Off</span><span class="on" role="switch" aria-checked="true" data-test="li-2-on">On</span></button></div>
+  </template>
+  <button data-test="save" data-close>Save &amp; Exit</button>
+  <button data-test="accept" data-close>Accept all</button>
+</div>
+<script>
+  const REDRAW_MS = 50; // the panel redraws a switch a moment after the click, not during it
+  // Only a click on a half changes a switch. The harness flips whatever switch was clicked, so each
+  // switch's real state is kept here (data-on) and drawn over that: at once, then again after the change.
+  document.addEventListener('click', (event) => {
+    const toggle = event.target.closest('.pm-toggle');
+    if (!toggle) return;
+    const draw = () => {
+      for (const el of [toggle, ...toggle.querySelectorAll('[role="switch"]')]) {
+        el.setAttribute('aria-checked', String(toggle.dataset.on !== 'no'));
+      }
+    };
+    draw();
+    const half = event.target.closest('.off, .on');
+    if (!half) return;
+    setTimeout(() => {
+      toggle.dataset.on = half.classList.contains('on') ? 'yes' : 'no';
+      draw();
+    }, REDRAW_MS);
+  });
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

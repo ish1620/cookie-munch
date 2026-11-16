@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings with a switch for all the others</title>
+<meta name="expect" content="settings,all,save">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="saved with optional cookies off">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings with a switch for all the others</h1>
+<p>Expect: opens "Manage preferences", clicks the "All optional cookies" switch and then "Save my
+choices". It clicks neither the Analytics nor the Marketing switch: the first click has turned them off.</p>
+<p>The "All optional cookies" switch turns the other two off at once, but the panel draws that a moment
+later. Until then they still look on, and a click on one would switch it back on.</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <p>Choose which cookies we and our partners may use.</p>
+  <div>All optional cookies <button role="switch" aria-checked="true" data-test="all">on</button></div>
+  <div id="categories">Analytics <button role="switch" aria-checked="true" data-test="analytics">on</button>
+       Marketing <button role="switch" aria-checked="true" data-test="marketing">on</button></div>
+  <button data-test="save" data-close>Save my choices</button>
+  <button data-test="accept" data-close>Accept all</button>
+</div>
+<script>
+  const REDRAW_MS = 16; // the panel draws a change on the next frame, not during the click
+  // Each category's real state is kept here (data-on) and drawn later. The harness flips aria-checked
+  // on every click of a switch, so a click on a category first draws its state as it was.
+  const all = document.querySelector('[data-test="all"]');
+  const boxes = [...document.querySelectorAll('#categories [role="switch"]')];
+  const isOn = (box) => box.dataset.on !== 'no';
+  const draw = () => {
+    for (const box of boxes) box.setAttribute('aria-checked', String(isOn(box)));
+    all.setAttribute('aria-checked', String(boxes.every(isOn)));
+  };
+  document.addEventListener('click', (event) => {
+    const box = event.target.closest('#panel [role="switch"]');
+    if (!box) return;
+    if (box === all) {
+      const value = boxes.every(isOn) ? 'no' : 'yes';
+      for (const each of boxes) each.dataset.on = value;
+    } else {
+      box.setAttribute('aria-checked', String(isOn(box)));
+      box.dataset.on = isOn(box) ? 'no' : 'yes';
+    }
+    setTimeout(draw, REDRAW_MS);
+  });
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

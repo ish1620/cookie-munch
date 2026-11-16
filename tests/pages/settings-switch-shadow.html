@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings whose switches keep a checkbox in shadow DOM</title>
+<meta name="expect" content="settings,analytics,marketing,save">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="saved with optional cookies off">
+<link rel="stylesheet" href="style.css">
+<style>ion-toggle { display: inline-block; padding: 2px 8px; border: 1px solid #999; border-radius: 10px; }</style>
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings whose switches keep a checkbox in shadow DOM</h1>
+<p>Expect: opens "Manage preferences", clicks the Analytics and the Marketing switch, once each, and
+clicks "Save my choices". It clicks neither the checkboxes inside them nor the locked "Strictly necessary"
+switch.</p>
+<p>This is Ionic's toggle: a custom element with role="switch" that listens for clicks, and in its shadow
+DOM a checkbox that is a switch too. The two are one switch. The element flips its state at once and
+redraws a moment later, so a click on the checkbox right after the first click would switch it back on.</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <p>Choose which cookies we and our partners may use.</p>
+  <div>Strictly necessary <ion-toggle role="switch" aria-checked="true" aria-disabled="true" data-test="necessary"></ion-toggle></div>
+  <div>Analytics <ion-toggle role="switch" aria-checked="true" data-test="analytics"></ion-toggle></div>
+  <div>Marketing <ion-toggle role="switch" aria-checked="true" data-test="marketing"></ion-toggle></div>
+  <button data-test="save" data-close>Save my choices</button>
+  <button data-test="accept" data-close>Accept all</button>
+</div>
+<script>
+  const REDRAW_MS = 16; // the toggle redraws on the next frame, not during the click
+  // The harness flips aria-checked on every click of a switch; each redraw here draws over that.
+  for (const host of document.querySelectorAll('ion-toggle')) {
+    const locked = host.getAttribute('aria-disabled') === 'true';
+    const input = Object.assign(document.createElement('input'), { type: 'checkbox', disabled: locked });
+    input.setAttribute('role', 'switch');
+    const label = document.createElement('label');
+    label.append(input, ' on');
+    host.attachShadow({ mode: 'open' }).append(label);
+    let checked = true;
+    const draw = () => {
+      input.checked = checked;
+      for (const part of [host, input]) part.setAttribute('aria-checked', String(checked));
+    };
+    host.addEventListener('click', (event) => {
+      if (locked) return;
+      event.preventDefault();
+      checked = !checked;
+      setTimeout(draw, REDRAW_MS);
+    });
+    draw();
+  }
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

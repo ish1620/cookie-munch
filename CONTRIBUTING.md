@@ -38,9 +38,18 @@ It watches the page for 30 seconds after it's shown. In **Decline** mode it trie
 2. **Button labels** (`REJECT`): any button whose text matches a "reject" pattern, but only inside
    something that looks like a cookie banner: a pop-up, dialog or element named "cookie"/"consent" whose
    text talks about cookies, or an element the cookie list has a rule for on that site.
-3. **Settings flow** (`SETTINGS`, `SAVE`): if a banner has only Accept and Settings, open the settings,
-   switch every optional category off, and save. Switches are checkboxes, `role="switch"` and toggle buttons
-   (`aria-pressed`). If the settings have no switch it can turn off, it saves nothing and leaves the banner to step 4.
+3. **Settings flow** (`SETTINGS`, `SAVE`, `LEGIT`, `OBJECT`): if a banner has only Accept and Settings, open
+   the settings, switch every optional category off, and save. Switches are checkboxes, `role="switch"`,
+   `role="checkbox"` and toggle buttons (`aria-pressed`). A switch that holds other switches, also in its
+   shadow DOM, is one switch, turned off by one click: on its "Off" part (the one with the class `off`)
+   when it is drawn as an "Off" and an "On" part, on the switch inside it when its own markup holds just
+   one (a styled switch around the real checkbox), and on itself otherwise. After a click it waits a
+   moment before reading the next switch, since one switch can turn others off. If the panel has a
+   "Legitimate interest" tab or button, it opens that view before saving, clicks "Object all" if there is
+   one, waits a moment for that to be drawn, and switches off what is still on there: those purposes are
+   on until objected to. It does that once per page. If the settings have no switch it can turn off and
+   no such view, it saves nothing and leaves the banner to step 4; the same if that view leaves no Save
+   button.
 4. **Hide the rest**: 4 seconds in, add the cookie list's CSS and hide any banner from steps 1-3 that's
    still showing. If it had frozen page scrolling, unfreeze it. This waits (up to 6 s more) while the page
    is still loading or a decline is under way, so late banners get declined rather than hidden.
@@ -56,8 +65,10 @@ Label matching is off on Gmail, Google Calendar, Outlook and Teams (`GENERIC_SKI
 **A platform:** find the reject button with Safari's Web Inspector (right-click it → Inspect) and add a line
 to `KNOWN` in `content.js`: the platform's name and a CSS selector that matches only its reject button.
 
-**A label:** add the wording to `REJECT` (or `SETTINGS` / `SAVE` for the settings flow). Patterns match the
-whole button text after it's lower-cased and everything that isn't a letter or digit has become a space.
+**A label:** add the wording to `REJECT` (or, for the settings flow, to `SETTINGS`, `SAVE`, `LEGIT` for
+what opens a panel's "Legitimate interest" view, or `OBJECT` for its "Object all"; those two are English
+only so far). Patterns match the whole button text after it's lower-cased and everything that isn't a
+letter or digit has become a space.
 Then add the label to the matching list in `tests/labels.mjs` (`reject`, `settings`, …). If a similar
 wording must not count, add that to the `null` list. Run:
 
@@ -82,7 +93,7 @@ python3 -m http.server 8765 --bind 127.0.0.1
   extension stops watching it (30 seconds after the page loads), so a late wrong click still fails.
 - **Mock banners, one by one:** open <http://127.0.0.1:8765/tests/>. On each page, keep the tab in front,
   wait 32 seconds (the extension watches a page for 30), then run `__result()` in the browser console;
-  it must say `pass: true`. There are 14 pages that should be declined, 1 that should open the settings
+  it must say `pass: true`. There are 22 pages that should be declined, 2 that should open the settings
   and then hide the banner, 6 that should be hidden without a click, and 4 where nothing may be touched.
 - **Labels:** `node tests/labels.mjs`.
 - **Popup:** <http://127.0.0.1:8765/tests/popup-preview.html> shows the real popup in every state.
@@ -96,10 +107,16 @@ python3 -m http.server 8765 --bind 127.0.0.1
   `content.js` in every frame as Safari would (with a small stand-in for Safari's APIs,
   `tests/live/browser-stub.js`), and judges the consent record the site itself wrote (OneTrust's and
   Cookiebot's cookies, or the IAB TCF answer). PASS: every optional category refused. FAIL: a consent, or a
-  banner that was seen but not refused (hiding it is not enough). SKIP: a challenge or block page, which is
+  banner that was seen but not refused (hiding it is not enough). Legitimate interest in the TCF answer is
+  judged only for a site marked `"legitimateInterest": "judged"` in `sites.json`, one whose settings Cookie
+  Munch opens: there every purpose's legitimate interest must be off too. For the other sites it is printed
+  and not judged, because a site's own Reject button can leave it on. SKIP: a challenge or block page, which is
   never worked around, or a site that showed no banner this time. Any FAIL, or no PASS at all, exits with 1.
   Sites answer by where the visitor is, so results from outside the EU differ; it doesn't run in GitHub Actions.
   The list holds only sites Cookie Munch should decline.
+- **Random switch panels (local only, for work on the switch code):** `node tests/random/run.mjs` builds
+  seeded random settings panels from real switch shapes and lists the ones left with a switch on; its header
+  has the options.
 - **The installed extension:** open <http://127.0.0.1:8765/tests/demo.html> in Safari. That page doesn't load
   any of the extension's code; when the extension works, the page and its tab title say "✓ Rejected". Use
   `127.0.0.1`, not `localhost`. This check stays manual for now: `node tools/probe_safaridriver.mjs` asks

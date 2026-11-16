@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Random settings panel</title>
+<link rel="stylesheet" href="../pages/style.css">
+<script src="panels.js"></script>
+</head>
+<body>
+<h1>Random settings panel</h1>
+<p>One random panel, picked by <code>?seed=1&amp;index=0</code>, with the content script in
+<code>&amp;ext=/extension</code> loaded into it. <code>__verdict()</code> in the console says how it ended.</p>
+<script>
+  // Stands in for Safari's extension APIs, as tests/harness.js does, and keeps what the popup would be told.
+  const query = new URLSearchParams(location.search);
+  const spec = RandomPanels.specFor(Number(query.get('seed')), Number(query.get('index')), true);
+  window.__messages = [];
+  window.browser = {
+    storage: { local: { get: async (defaults) => ({ ...defaults, disabledSites: [], mode: 'decline' }), set: async () => {} } },
+    runtime: {
+      sendMessage: async (message) => {
+        window.__messages.push({ ...message, at: Date.now() });
+        return message.type === 'siteSelectors' ? [] : undefined;
+      },
+    },
+  };
+
+  if (spec.frame && !query.has('inner')) {
+    // The whole banner lives in an iframe, as Sourcepoint's and TrustArc's do.
+    const frame = document.createElement('iframe');
+    frame.src = `${location.href}&inner=1`;
+    frame.style.cssText = 'position:fixed;inset:10% 5%;width:90%;height:80%;border:0';
+    document.body.append(frame);
+    window.__verdict = () => frame.contentWindow?.__verdict?.() ?? null;
+  } else {
+    const panel = RandomPanels.build(spec, document, document.body);
+    const startLateRows = () => panel.lateRows.forEach((start) => start());
+    if (spec.layout === 'settings') {
+      const button = (label) => Object.assign(document.createElement('button'), { type: 'button', textContent: label });
+      const [accept, settings] = [button('Accept all'), button('Manage preferences')];
+      const first = Object.assign(document.createElement('div'), { className: 'fixed' });
+      first.append(Object.assign(document.createElement('p'), { textContent: 'We use cookies to give you the best experience on our site.' }), accept, settings);
+      panel.banner.hidden = true;
+      settings.addEventListener('click', () => {
+        first.hidden = true;
+        panel.banner.hidden = false;
+        startLateRows();
+      });
+      document.body.append(first);
+      panel.banners.push(first);
+      panel.forbidden.push(accept);
+    } else {
+      startLateRows();
+    }
+    panel.save.addEventListener('click', () => {
+      panel.savedWith ??= panel.switches.map((item) => item.get()); // what the site would record
+      panel.banner.hidden = true;
+    });
+    window.__verdict = () => {
+      const reports = window.__messages.filter((message) => message.type === 'declined');
+      const saved = reports.some((message) => message.how === 'saved with optional cookies off');
+      return {
+        ...RandomPanels.judge(panel, saved),
+        report: reports.map((message) => message.how).join(','),
+        reportedAt: reports.find((message) => message.how !== 'hidden')?.at ?? null,
+        clicks: panel.clicks.length,
+      };
+    };
+  }
+  document.body.append(Object.assign(document.createElement('script'), { src: `${query.get('ext') ?? '/extension'}/content.js` }));
+</script>
+</body>
+</html>

@@ -26,7 +26,8 @@ Pick a mode in the toolbar popup.
    "Rechazar todo" or "Alle ablehnen" (English, Japanese, most European languages, Chinese and
    Korean), but only inside something that looks like a cookie banner.
 3. If a banner only offers **Accept** and **Settings**, it opens the settings, switches every
-   optional category off, and saves.
+   optional category off, objects to "legitimate interest" where the settings have a view for it
+   (English panels so far), and saves.
 4. About four seconds in (a little later on slow pages), it hides whatever couldn't be declined,
    like "OK"-only notices, and unfreezes the page if the banner had locked scrolling.
 

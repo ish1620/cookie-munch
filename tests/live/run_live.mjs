@@ -1,7 +1,9 @@
 // Runs content.js on the real sites in tests/live/sites.json, in Playwright's WebKit (Safari's engine),
 // and judges each site by the consent record the site itself wrote, not by its banner going away:
 //   PASS  the record is a refusal (every optional category off)
-//   FAIL  the record is a consent, or a banner was seen and the record is missing (or the banner was only hidden)
+//   FAIL  the record is not a refusal (a consent, or legitimate interest left on where the site's entry
+//         asks for that to be judged), or a banner was seen and the record is missing (or the banner
+//         was only hidden)
 //   SKIP  a challenge or block page, or the site showed no banner, wrote no record and got no decline
 // Nothing here tries to get past a challenge page: that site is skipped. Each site is visited once, in a
 // fresh browser with the same plain English locale and UTC time for everyone, and no other changes to how
@@ -123,9 +125,12 @@ const records = {
     };
   },
 
-  // The IAB TCF API in the top page. A refusal: every purpose consent off. Legitimate interest is printed
-  // for information and not judged.
-  async tcf(page) {
+  // The IAB TCF API in the top page. A refusal: every purpose consent off. Legitimate interest for
+  // purposes is judged only for a site with "legitimateInterest": "judged" in sites.json (a site whose
+  // settings Cookie Munch opens): there the record must hold it, with every purpose off. Elsewhere it is
+  // printed for information: a site's own Reject button may leave it on. Vendors' legitimate interest
+  // is never judged.
+  async tcf(page, site) {
     const data = await page.evaluate((timeout) => new Promise((resolve) => {
       if (typeof window.__tcfapi !== 'function') return resolve({ missing: true });
       const timer = setTimeout(() => resolve({ timedOut: true }), timeout);
@@ -140,7 +145,7 @@ const records = {
             gdprApplies: tcData?.gdprApplies,
             hasString: Boolean(tcData?.tcString),
             consents: tcData?.purpose?.consents ?? {},
-            legitimate: tcData?.purpose?.legitimateInterests ?? {},
+            legitimate: tcData?.purpose?.legitimateInterests ?? null, // null: the record doesn't hold it
           });
         });
       });
@@ -153,10 +158,13 @@ const records = {
     if (!data.hasString || data.gdprApplies === false || data.eventStatus === 'cmpuishown') {
       return { found: false, summary: `no TC string yet (${about}, gdprApplies ${data.gdprApplies})`, bannerShowing };
     }
+    const judged = site.legitimateInterest === 'judged';
+    const legitimateOff = data.legitimate !== null && Object.values(data.legitimate).every((kept) => kept === false);
     return {
       found: true,
-      refused: Object.values(data.consents).every((given) => given === false),
-      summary: `purpose consents: ${ids(data.consents)}; legitimate interest (not judged): ${ids(data.legitimate)} (${about})`,
+      refused: Object.values(data.consents).every((given) => given === false) && (!judged || legitimateOff),
+      summary: `purpose consents: ${ids(data.consents)}; legitimate interest${judged ? '' : ' (not judged)'}: ` +
+        `${data.legitimate === null ? 'missing from the record' : ids(data.legitimate)} (${about})`,
       bannerShowing,
     };
   },
@@ -175,7 +183,7 @@ async function challengeOf(page, response) {
 function verdictOf({ record, challenge, messages }) {
   const reports = messages.filter((m) => m.type === 'declined'); // content.js saw a banner and declined or hid it
   const said = reports.map((m) => m.how).join(', ') || 'nothing';
-  if (record.found && !record.refused) return ['FAIL', `the site recorded a consent: ${record.summary}`];
+  if (record.found && !record.refused) return ['FAIL', `the site's record is not a refusal: ${record.summary}`];
   if (challenge) return ['SKIP', `challenge or block page (${challenge})`];
   if (record.found) return ['PASS', `refused: ${record.summary}`];
   if (reports.length && !reports.some(isDecline)) return ['FAIL', `banner only hidden, no refusal recorded: ${record.summary}`];
@@ -207,7 +215,7 @@ async function visit(browser, site) {
     const challenge = await challengeOf(page, response);
     let record;
     try {
-      record = await records[site.record](page);
+      record = await records[site.record](page, site);
     } catch (error) {
       return { verdict: 'FAIL', reason: `couldn't read the ${site.record} record: ${error.message.split('\n')[0]}`, actions };
     }
@@ -221,6 +229,9 @@ async function visit(browser, site) {
 const sites = JSON.parse(read('tests/live/sites.json'));
 for (const site of sites) {
   if (!records[site.record]) stop(`${site.name}: unknown record "${site.record}" (use ${Object.keys(records).join(', ')}).`);
+  if ('legitimateInterest' in site && (site.legitimateInterest !== 'judged' || site.record !== 'tcf')) {
+    stop(`${site.name}: "legitimateInterest" can only be "judged", on a site with "record": "tcf".`);
+  }
 }
 
 let browser;

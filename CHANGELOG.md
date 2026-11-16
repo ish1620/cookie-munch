@@ -5,8 +5,16 @@
 - A settings panel whose switches Cookie Munch can't turn off is no longer saved with the site's defaults.
   The banner is hidden instead, and the popup says it was hidden.
 - Settings panels that use toggle buttons (`aria-pressed`) are now switched off and saved.
+- When it saves a banner's settings, Cookie Munch now also opens the panel's "Legitimate interest" view,
+  objects to everything there, and then saves. This works on English panels from InMobi ("Object all") and
+  Sourcepoint (plain switches, and switches made of an "Off" and an "On" half).
+- A switch that holds another switch, such as a styled switch around the real checkbox or a custom element
+  with a checkbox in its shadow DOM (Element UI, Quasar, Ionic), is now clicked once. Clicked as two
+  switches, Ionic's ended up on again.
+- After "Object all" in a "Legitimate interest" view, and after each switch it clicks, Cookie Munch waits
+  a moment before it reads the next switch, so one that another control turned off is not clicked back on.
 - Tests: each mock page is judged once, after the extension stops watching it, so a late wrong click fails.
-  Two new pages cover settings panels.
+  New pages cover settings panels.
 - The weekly cookie-list pull request starts its own checks.
 - Tests: `npm run test:live` checks real EU sites from your own Mac and judges each by the consent record
   the site wrote, not by its banner going away.

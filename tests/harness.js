@@ -1,6 +1,6 @@
 // Test harness: stands in for Safari's extension APIs and the background script,
-// makes the mock banners behave (close, open settings, flip switches and toggle buttons), and
-// records every click. Load it before content.js on each test page.
+// makes the mock banners behave (close, open settings, open a view inside the settings, flip switches
+// and toggle buttons, "object all"), and records every click. Load it before content.js on each test page.
 //
 // Page options, as <meta name="..." content="...">:
 //   expect          the clicks that should happen, comma-separated ("" = none)
@@ -11,6 +11,15 @@
 //   disabled-sites  sites switched off in the popup
 //   site-rules      extra list selectors for this test site, comma-separated
 // Elements marked data-keep must still be visible at the end.
+//
+// Banner behavior, as attributes on the mock's buttons:
+//   data-open="id"     hide this banner and show the element with that id
+//   data-close         hide this banner
+//   data-view="id"     a tab or button that opens a view inside the banner, which stays open: the
+//                      <template> with that id is replaced by its content VIEW_DRAW_MS later. Until then
+//                      the view's switches are not in the page at all (hidden ones would not do:
+//                      content.js also switches off switches it can't see)
+//   data-all-off="id"  turn off every role="switch" inside the element with that id
 
 const meta = (name) => document.querySelector(`meta[name="${name}"]`)?.content;
 
@@ -54,6 +63,8 @@ window.browser = {
   runtime: { sendMessage: fakeBackground },
 };
 
+const VIEW_DRAW_MS = 400; // a real panel draws a view a moment after the click that opens it
+
 window.__clicks = [];
 window.__messages = [];
 
@@ -76,6 +87,17 @@ document.addEventListener('click', (event) => {
   if (opener) {
     opener.closest('[data-banner]').hidden = true;
     document.getElementById(opener.dataset.open).hidden = false;
+  }
+  const viewOpener = target.closest('[data-view]');
+  if (viewOpener) {
+    const view = document.getElementById(viewOpener.dataset.view); // gone once it has been drawn
+    if (view) setTimeout(() => view.replaceWith(view.content.cloneNode(true)), VIEW_DRAW_MS);
+  }
+  const allOff = target.closest('[data-all-off]');
+  if (allOff) {
+    for (const box of document.getElementById(allOff.dataset.allOff).querySelectorAll('[role="switch"]')) {
+      box.setAttribute('aria-checked', 'false');
+    }
   }
   const closer = target.closest('[data-close]');
   if (closer) closer.closest('[data-banner]').hidden = true;

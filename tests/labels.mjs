@@ -17,7 +17,11 @@ const cases = {
   accept: ['Accept all', 'Accept All Cookies', 'Allow all', 'OK', 'Got it', 'I agree', 'Agree', 'Alle akzeptieren', 'Tout accepter', 'Aceptar', 'Accetta', '同意する', 'すべて許可', 'Yes', 'Yes, I agree'],
   settings: ['Manage preferences', 'Cookie settings', 'Cookies Settings', 'Customize', 'Manage options', 'More options', 'Einstellungen', 'Paramétrer', 'Cookie設定', '設定', 'Let me choose', 'View cookie settings', 'No, take me to settings', 'Manage cookies', 'Customise', 'Show purposes'],
   save: ['Save my choices', 'Confirm my choices', 'Allow selection', 'Save', 'Save preferences', 'Auswahl speichern', 'Enregistrer', '設定を保存'],
-  null: ['Learn more', 'Privacy policy', 'Reject suggestion', 'Decline invitation', 'Subscribe', 'Accept all and close the banner forever please', 'Do not sell or share my personal information', 'Necessary cookies', 'Read more', 'Reject all and subscribe', 'Subscribe and reject', 'Open', 'View'],
+  legit: ['Legitimate interest', 'LEGITIMATE INTEREST', 'Legitimate interests', 'Legitimate interest purposes'],
+  object: ['OBJECT ALL', 'Object to all legitimate interests', 'Object to legitimate interest'],
+  null: ['Learn more', 'Privacy policy', 'Reject suggestion', 'Decline invitation', 'Subscribe', 'Accept all and close the banner forever please', 'Do not sell or share my personal information', 'Necessary cookies', 'Read more', 'Reject all and subscribe', 'Subscribe and reject', 'Open', 'View',
+    'Legitimate', 'Legitimate interest purposes and vendors', 'Object', 'Objects', 'Objection', 'Remove objection',
+    'Learn more about legitimate interest', 'Accept legitimate interest', 'Purposes', 'Features', 'Site vendors', 'User consent', 'Partners'],
 };
 let bad = 0;
 for (const [want, list] of Object.entries(cases)) for (const t of list) {

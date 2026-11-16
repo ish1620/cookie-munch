@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings whose "Object all" redraws the switches a moment later</title>
+<meta name="expect" content="settings,legit,object-all,save">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="saved with optional cookies off">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings whose "Object all" redraws the switches a moment later</h1>
+<p>Expect: opens "More options", opens the "Legitimate interest" view, clicks "Object all" and then
+"Save &amp; Exit". It clicks neither switch in that view: "Object all" has turned them off.</p>
+<p>"Object all" turns both switches off at once, but the panel draws that a moment later. Until then they
+still look on, and a click on one would switch it back on.</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Agree</button>
+  <button data-test="settings" data-open="panel">More options</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>We value your privacy</h2>
+  <p>Choose which cookies we and our partners may use.</p>
+  <template id="legit-view">
+    <div id="legit-purposes">
+      <button data-test="object-all">Object all</button>
+      <div>Advertising <button role="switch" aria-checked="true" data-test="li-ads">on</button>
+           Measurement <button role="switch" aria-checked="true" data-test="li-measure">on</button></div>
+    </div>
+  </template>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="legit" data-view="legit-view">Legitimate interest</button>
+  <button data-test="save" data-close>Save &amp; Exit</button>
+</div>
+<script>
+  const REDRAW_MS = 100; // the panel draws a change this long after the click that made it
+  // Each switch's real state is kept here (data-on) and drawn later. The harness flips aria-checked
+  // on every click of a switch, so a click first draws the state as it was.
+  const draw = (box) => box.setAttribute('aria-checked', String(box.dataset.on !== 'no'));
+  document.addEventListener('click', (event) => {
+    const box = event.target.closest('#legit-purposes [role="switch"]');
+    const boxes = [...document.querySelectorAll('#legit-purposes [role="switch"]')];
+    if (box) {
+      draw(box);
+      box.dataset.on = box.dataset.on === 'no' ? 'yes' : 'no';
+    } else if (event.target.closest('[data-test="object-all"]')) {
+      for (const each of boxes) each.dataset.on = 'no';
+    } else {
+      return;
+    }
+    setTimeout(() => boxes.forEach(draw), REDRAW_MS);
+  });
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>
