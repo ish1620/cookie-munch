@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Banner with a pay button and a plain reject</title>
+<meta name="expect" content="reject">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="rejected">
+<link rel="stylesheet" href="style.css">
+<style>.cookie-wall-open { overflow: hidden; }</style>
+<script src="../harness.js"></script>
+</head>
+<body class="cookie-wall-open">
+<h1>Banner with a pay button and a plain reject</h1>
+<p>Expect: skips the pay button and clicks the plain "Rechazar" button. The banner closes, page
+scrolling is unfrozen, and the popup is told "rejected".</p>
+<div class="fixed" role="dialog" aria-modal="true" tabindex="-1" data-banner>
+  <p>Utilizamos cookies propias y de terceros para analizar la navegación y mostrarte publicidad
+  personalizada.</p>
+  <div class="cookie-buttons">
+    <button data-test="accept" data-close>Aceptar</button>
+    <button data-test="pay" data-close>Rechazar y suscribirse</button>
+    <button data-test="reject" data-close>Rechazar</button>
+  </div>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

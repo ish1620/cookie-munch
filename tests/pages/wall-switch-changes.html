@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Switch whose label turns into a pay label during the pause</title>
+<meta name="expect" content="settings,analytics,save">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="saved with optional cookies off">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Switch whose label turns into a pay label during the pause</h1>
+<p>Expect: opens "Manage preferences", turns Analytics off, skips the second switch because its label
+turns into a pay label during the pause after the first switch, and clicks "Save my choices".</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <p>Choose which cookies we and our partners may use.</p>
+  <div><button role="switch" aria-checked="true" data-test="analytics">Analytics</button>
+       <button role="switch" aria-checked="true" data-test="pay-switch">Marketing</button></div>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="save" data-close>Save my choices</button>
+</div>
+<script>
+  const analytics = document.querySelector('[data-test="analytics"]');
+  const paySwitch = document.querySelector('[data-test="pay-switch"]');
+  analytics.addEventListener('click', () => {
+    setTimeout(() => { paySwitch.textContent = 'Rechazar y pagar 9€'; }, 20);
+  }, { once: true });
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

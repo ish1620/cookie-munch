@@ -183,6 +183,12 @@
     /^object to (all )?legitimate interests?$/,
   ];
 
+  // Buttons that move around a settings panel (InMobi's "PARTNERS" and "BACK", drawn as toggle
+  // buttons). Never clicked, and never a switch. English only for now.
+  const NAV = [
+    /^(partners|back)$/,
+  ];
+
   // Only used to notice that a banner is showing. Never clicked.
   const ACCEPT = [
     /^(accept|agree|allow|ok|okay|got it|i agree|i accept|yes|understood|i understand|consent|continue)( all| everything)?( cookies)?( (and )?(close|continue))?$/,
@@ -203,9 +209,17 @@
   const combine = (list) => new RegExp(list.map((re) => `(?:${re.source})`).join('|'), 'u');
   const LABELS = {
     reject: combine(REJECT), object: combine(OBJECT), legit: combine(LEGIT),
-    save: combine(SAVE), settings: combine(SETTINGS), accept: combine(ACCEPT),
+    save: combine(SAVE), settings: combine(SETTINGS), nav: combine(NAV), accept: combine(ACCEPT),
   };
-  const KINDS = ['reject', 'object', 'legit', 'save', 'settings', 'accept']; // checked in this order
+  const KINDS = ['reject', 'object', 'legit', 'save', 'settings', 'nav', 'accept']; // checked in this order
+
+  // A pay button: on a pay-or-consent wall, the "reject" that costs money or a subscription
+  // ("Rechazar por 36€ / año", "Refuser et s'abonner", "REJECT ALL AND PAY"). A whole word from such
+  // walls, or a price: a number beside €, $ or £, read from the text as it is, since normalize()
+  // drops the sign. Only the button's own text counts, never its aria-label or title.
+  const PAY_WORDS = /(?:^| )(?:suscribirse|suscribirme|suscríbete|pagar|s abonner|subscribe|pay)(?: |$)/u;
+  const PRICE = /\d\s*[€$£]|[€$£]\s*\d/u;
+  const isPayText = (raw) => PRICE.test(raw) || PAY_WORDS.test(normalize(raw));
 
   // Text that tells us an element is a cookie banner. Needs a cookie/consent
   // word plus some privacy-ish context, so a "Cookie party" invite doesn't count.
@@ -232,13 +246,39 @@
     return kindCache.get(label);
   }
 
+  // A control's own text (an input's value), and the part of it that shows.
+  const rawText = (el) => (el instanceof HTMLInputElement ? el.value || '' : el.textContent || '');
+  const shownText = (el) => (el instanceof HTMLInputElement ? el.value || '' : el.innerText ?? el.textContent ?? '');
+
+  // A button's kind (one of KINDS), 'pay' for a pay button, or null. The pay test comes first,
+  // before the aria-label, and on labels up to MAX_PAY_LABEL long (pay labels run longer than the
+  // others, which stop at 150). It reads textContent, as the labels do, and asks for what shows
+  // only when that looks like a pay label: hidden pay words don't count, and no other button
+  // costs a layout read.
+  const MAX_PAY_LABEL = 500;
   function kindOf(el) {
-    const raw = el instanceof HTMLInputElement ? el.value || '' : el.textContent || '';
+    const raw = rawText(el);
+    if (raw.length > MAX_PAY_LABEL) return null;
+    if (isPayText(raw) && isPayText(shownText(el))) return 'pay';
     if (raw.length > 150) return null; // too long to be a button
     const fromText = kindOfLabel(normalize(raw));
     if (fromText) return fromText;
     const aria = el.getAttribute('aria-label') || el.getAttribute('title');
     return aria ? kindOfLabel(normalize(aria)) : null;
+  }
+
+  // True when the control shows a pay label right now. Unlike kindOf() it always reads what
+  // shows, whatever its length, since markup can run a pay word into its neighbour ("AND" and
+  // "PAY" on two lines): for the few places where that is worth a layout read.
+  const showsPay = (el) => isPayText(shownText(el));
+
+  // Every click this script makes goes through here, for a last look at the button itself: no
+  // click when it shows a pay label right now (a label can change after the button was chosen).
+  // False when it didn't click.
+  function press(el) {
+    if (showsPay(el)) return false;
+    el.click();
+    return true;
   }
 
   // Parent element, stepping out of shadow roots.
@@ -340,13 +380,19 @@
 
   // The banner's category switches: checkboxes, switches, and toggle buttons. A toggle button
   // labelled like one of the banner's own buttons (any kind in KINDS: Reject, Object all,
-  // Legitimate interest, Save, Settings, Accept) is not a switch. A switch that holds other
-  // switches is one switch, the outer one: what is inside it is a part of it.
+  // Legitimate interest, Save, Settings, a navigation button such as "Partners", Accept) is not a
+  // switch, and neither is any control labelled as a navigation button or a pay button. A switch
+  // that holds other switches is one switch, the outer one: what is inside it is a part of it.
+  function isSwitch(box) {
+    const kind = kindOf(box);
+    if (kind === 'pay' || showsPay(box)) return false;
+    return box.matches(TOGGLE_BUTTONS) ? !kind : kind !== 'nav';
+  }
+
   function switchesIn(banner) {
     return allRoots(banner)
       .flatMap((root) => [...root.querySelectorAll(SWITCHES)])
-      .filter((box) => !isPart(box))
-      .filter((box) => !box.matches(TOGGLE_BUTTONS) || !kindOf(box));
+      .filter((box) => !isPart(box) && isSwitch(box));
   }
 
   // True for a switch inside another switch, also through a shadow root (Ionic's ion-toggle
@@ -393,11 +439,12 @@
   // ---------------------------------------------------------------------------
   const tried = new WeakSet();
 
+  // A known platform's reject button, unless it is a pay button.
   function findKnown(roots) {
     for (const { name, selector } of KNOWN) {
       for (const root of roots) {
         for (const el of root.querySelectorAll(selector)) {
-          if (!tried.has(el) && isVisible(el)) return { el, name };
+          if (!tried.has(el) && isVisible(el) && kindOf(el) !== 'pay') return { el, name };
         }
       }
     }
@@ -412,7 +459,7 @@
         if (seen.has(el) || tried.has(el)) continue;
         seen.add(el);
         const kind = kindOf(el);
-        if (!kind || !isVisible(el) || leavesPage(el)) continue;
+        if (!kind || kind === 'pay' || !isVisible(el) || leavesPage(el)) continue;
         const banner = bannerOf(el);
         const text = el.textContent || el.value || el.getAttribute('aria-label') || el.getAttribute('title') || '';
         if (banner) found[kind].push({ el, banner, label: normalize(text) });
@@ -467,15 +514,20 @@
 
   function click(el) {
     tried.add(el);
+    if (!press(el)) return false;
     clicks++;
-    el.click();
+    return true;
   }
 
   // Click a reject/save button, then check a moment later that it went away. Only then
   // does it count as declined.
   function finish(el, platform, how, previous = stage) {
+    if (!click(el)) { // not safe to click after all: look for another button
+      stage = previous;
+      schedule(0);
+      return;
+    }
     log(`${how}: clicked "${(el.textContent || el.value || el.getAttribute('aria-label') || '').trim()}"`, platform ? `(${platform})` : '');
-    click(el);
     stage = 'verifying';
     setTimeout(() => {
       if (isVisible(el) && clicks < MAX_CLICKS) {
@@ -500,8 +552,7 @@
   async function switchOff(banner) {
     let switched = 0;
     for (const box of switchesIn(banner)) {
-      if (isOn(box) && !isLocked(box)) {
-        offPartOf(box).click();
+      if (isOn(box) && !isLocked(box) && isSwitch(box) && press(offPartOf(box))) {
         switched++;
         if (switched <= MAX_SWITCH_WAITS) await pause(SWITCH_REDRAW_MS);
       }
@@ -529,13 +580,17 @@
     }
     legitDone = true;
     tried.add(opener);
-    opener.click();
+    if (!press(opener)) {
+      gaveUp = true;
+      stage = previous;
+      return;
+    }
     log('opened the legitimate interest view');
     await pause(LEGIT_VIEW_MS);
     const objections = controlsIn(banner, 'object'); // found once: a redrawn button isn't clicked again
     for (const button of objections) {
       tried.add(button);
-      button.click();
+      if (!press(button)) continue;
       log(`objected: clicked "${(button.textContent || button.value || button.getAttribute('aria-label') || '').trim()}"`);
     }
     // "Object all" may redraw the view's switches a moment later: read them after that, or one
@@ -715,7 +770,7 @@
       const settings = found.settings[0];
       if (settings) {
         log('no reject button, opening the banner settings');
-        click(settings.el);
+        if (!click(settings.el)) return schedule(0);
         stage = 'settings';
         settingsOpenedAt = now;
         waitUntil = now + 1000;

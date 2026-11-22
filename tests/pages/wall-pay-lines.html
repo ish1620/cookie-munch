@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pay label drawn on two lines, labelled "Rechazar"</title>
+<meta name="expect" content="">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="hidden">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Pay label drawn on two lines, labelled "Rechazar"</h1>
+<p>Expect: nothing is clicked. The button shows "REJECT ALL AND" and "PAY" on two lines, which run
+together in the page's markup, and its aria-label says "Rechazar": what it shows decides. The banner
+is hidden instead.</p>
+<div class="fixed" role="dialog" aria-modal="true" data-banner>
+  <p>We and our partners use cookies to measure audiences and show you personalised advertising.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button aria-label="Rechazar" data-test="pay" data-close><span style="display:block">REJECT ALL AND</span><span style="display:block">PAY</span></button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

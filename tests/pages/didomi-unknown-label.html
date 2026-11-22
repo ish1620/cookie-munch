@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Known platform, reject button with an icon for a label</title>
+<meta name="expect" content="reject">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="rejected">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Known platform, reject button with an icon for a label</h1>
+<p>Expect: clicks Didomi's reject button, found by its selector, though its label (an icon) is no reject
+label. It is no pay button, so it is declined as before.</p>
+<div id="didomi-host"><div id="didomi-popup" class="didomi-popup-container">
+  <div id="didomi-notice" class="didomi-popup-notice fixed" role="dialog" aria-modal="true" data-banner>
+    <p>We and our partners use cookies to measure audiences and show you personalised advertising.</p>
+    <button id="didomi-notice-agree-button" data-test="accept" data-close>Agree and close</button>
+    <button id="didomi-notice-disagree-button" data-test="reject" data-close>✕</button>
+  </div>
+</div></div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

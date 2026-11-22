@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Pay-or-consent wall whose settings allow a free refusal</title>
+<meta name="expect" content="settings,analytics,marketing,save">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="saved with optional cookies off">
+<link rel="stylesheet" href="style.css">
+<style>.didomi-popup-open { overflow: hidden; }</style>
+<script src="../harness.js"></script>
+</head>
+<body class="didomi-popup-open">
+<h1>Pay-or-consent wall whose settings allow a free refusal</h1>
+<p>Expect: skips the pay button, opens "configuración", switches Analytics and Marketing off, and
+clicks "Guardar preferencias". The banner is declined, page scrolling is unfrozen, and the popup is
+told "saved with optional cookies off".</p>
+<div id="didomi-host"><div id="didomi-popup" class="didomi-popup-container">
+  <div id="didomi-notice" class="didomi-popup-notice fixed" role="dialog" aria-modal="true" data-banner>
+    <p>Utilizamos cookies propias y de terceros para analizar la navegación y mostrarte publicidad
+    personalizada. Puedes aceptarlas, o rechazarlas con una suscripción.</p>
+    <button id="didomi-notice-agree-button" data-test="accept" data-close>Aceptar y cerrar</button>
+    <button id="didomi-notice-disagree-button" data-test="pay" data-close>Rechazar por 36€ / año</button>
+    <a href="#" class="didomi-components-button" data-test="settings" data-open="panel">configuración</a>
+  </div>
+  <div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+    <h2>Configuración de cookies</h2>
+    <p>Gestiona tus preferencias de cookies y privacidad.</p>
+    <label>Analítica <span role="switch" aria-checked="true" tabindex="0" data-test="analytics">On</span></label>
+    <label>Publicidad <span role="switch" aria-checked="true" tabindex="0" data-test="marketing">On</span></label>
+    <button data-test="accept" data-close>Aceptar</button>
+    <button data-test="save" data-close>Guardar preferencias</button>
+  </div>
+</div></div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Hide-only mode: pay-or-consent walls</title>
+<meta name="mode" content="hide">
+<meta name="expect" content="">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="hidden">
+<link rel="stylesheet" href="style.css">
+<style>.didomi-popup-open { overflow: hidden; }</style>
+<script src="../harness.js"></script>
+</head>
+<body class="didomi-popup-open">
+<h1>Hide-only mode: pay-or-consent walls</h1>
+<p>Expect: Hide-only mode hides banners without reading them first, walls included: both are hidden,
+nothing is clicked, page scrolling is unfrozen, the popup is told "hidden".</p>
+<div id="didomi-host"><div id="didomi-popup" class="didomi-popup-container">
+  <div id="didomi-notice" class="didomi-popup-notice fixed" role="dialog" aria-modal="true" data-banner>
+    <p>Utilizamos cookies propias y de terceros para analizar la navegación y mostrarte publicidad
+    personalizada. Puedes aceptarlas, o rechazarlas con una suscripción.</p>
+    <button id="didomi-notice-agree-button" data-test="accept" data-close>Aceptar y cerrar</button>
+    <button id="didomi-notice-disagree-button" data-test="pay" data-close>Rechazar por 36€ / año</button>
+    <a href="#" class="didomi-components-button" data-test="settings">configuración</a>
+  </div>
+</div></div>
+<div class="fixed" role="dialog" aria-modal="true" style="top: 16px; bottom: auto" data-banner>
+  <p>Utilizamos cookies propias y de terceros para analizar la navegación y mostrarte publicidad
+  personalizada. Puedes aceptarlas, o rechazarlas con una suscripción.</p>
+  <button data-test="accept" data-close>Aceptar</button>
+  <button aria-label="Rechazar" data-test="pay" data-close>36€ / año</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

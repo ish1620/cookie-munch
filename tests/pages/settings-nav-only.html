@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings whose only toggle buttons are "PARTNERS" and "BACK"</title>
+<meta name="expect" content="settings">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="hidden">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings whose only toggle buttons are "PARTNERS" and "BACK"</h1>
+<p>Expect: opens "Manage preferences", then clicks nothing more. "PARTNERS" and "BACK" (aria-pressed) move
+around the panel; there is no switch and no "Legitimate interest" view, so saving would keep the site's
+defaults. The panel is hidden instead and the popup is told "hidden".</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <div><button aria-pressed="false" data-test="back">BACK</button>
+       <button aria-pressed="false" data-test="partners">PARTNERS</button></div>
+  <p>Analytics: on. Marketing: on.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="save" data-close>Save my choices</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

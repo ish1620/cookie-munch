@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Pay-or-consent walls: a button that costs money or a subscription ("Rechazar por 36€ / año",
+  "Refuser et s'abonner") is not clicked, where its label uses the pay words seen on such walls so
+  far. Where the banner still offers a free refusal (a plain reject button, or settings with
+  switches and a Save), Cookie Munch takes it; where it can't be refused, the banner is hidden as
+  any banner that can't be declined (a box whose only recognised button is the pay button is left
+  to the cookie list's rules).
+- Buttons that move around a settings panel ("PARTNERS", "BACK") are no longer taken for switches.
 - A settings panel whose switches Cookie Munch can't turn off is no longer saved with the site's defaults.
   The banner is hidden instead, and the popup says it was hidden.
 - Settings panels that use toggle buttons (`aria-pressed`) are now switched off and saved.
@@ -15,6 +22,7 @@
   a moment before it reads the next switch, so one that another control turned off is not clicked back on.
 - Tests: each mock page is judged once, after the extension stops watching it, so a late wrong click fails.
   New pages cover settings panels.
+- Tests: the label checker exits with 1 when a label is classified wrong.
 - The weekly cookie-list pull request starts its own checks.
 - Tests: `npm run test:live` checks real EU sites from your own Mac and judges each by the consent record
   the site wrote, not by its banner going away.
