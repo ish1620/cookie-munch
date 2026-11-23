@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cookie Munch frame demo, the banner</title>
+<style>
+  body { margin: 0; padding: 14px; font: 15px/1.4 -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f7; color: #1d1d1f; }
+  button { padding: 8px 14px; border-radius: 10px; border: 1px solid #6e6e73; background: transparent; font: inherit; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="k3">
+  <p>We use cookies to measure traffic and personalise ads. You can accept or reject them.</p>
+  <button data-choice="accepted">Accept all</button>
+  <button data-choice="rejected">Reject all</button>
+</div>
+<script>
+  // Tell the page around this frame which button was pressed; the page decides what happens to the frame.
+  for (const button of document.querySelectorAll('button')) {
+    button.addEventListener('click', () => parent.postMessage(button.dataset.choice, '*'));
+  }
+</script>
+</body>
+</html>

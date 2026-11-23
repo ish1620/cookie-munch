@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cookie Munch frame demo</title>
+<style>
+  body { margin: 0; padding: 24px 16px 260px; font: 17px/1.5 -apple-system, BlinkMacSystemFont, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; }
+  .result { padding: 16px; border-radius: 12px; background: #f5f5f7; color: #1d1d1f; font-weight: 600; }
+  iframe { position: fixed; left: 12px; bottom: 12px; width: 520px; max-width: calc(100% - 24px); height: 150px; border: 0; border-radius: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Cookie Munch frame demo</h1>
+  <p>This page doesn't load the extension's code. The banner sits in a frame; what the page does with
+     the frame after "Reject all" depends on the link you opened:</p>
+  <ul>
+    <li><a href="?after=remove">the page removes the frame</a>: the toolbar button should get its ✓ and the popup should say the banner was declined;</li>
+    <li><a href="?after=hide">the page hides the frame</a>: the same;</li>
+    <li><a href="?after=nothing">the page does nothing</a>: the banner stays, and the popup must not say it was declined.</li>
+  </ul>
+  <p id="result" class="result">Waiting… the banner hasn't been answered.</p>
+</main>
+<iframe src="demo-frame-inner.html" title="consent"></iframe>
+<script>
+  const after = new URLSearchParams(location.search).get('after') ?? 'remove';
+  const frame = document.querySelector('iframe');
+  const result = document.getElementById('result');
+  addEventListener('message', (event) => {
+    if (event.source !== frame.contentWindow) return;
+    result.textContent = `"${event.data}" was pressed in the frame; after that the page does: ${after}.`;
+    if (after === 'remove') setTimeout(() => frame.remove(), 300);
+    if (after === 'hide') setTimeout(() => { frame.style.display = 'none'; }, 300);
+  });
+</script>
+</body>
+</html>

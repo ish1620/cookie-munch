@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><link rel="stylesheet" href="style.css"><script src="../harness.js"></script></head>
+<body>
+<div data-banner>
+  <p>We and our partners use cookies and store and/or access information on a device.</p>
+  <button title="Accept" data-test="accept">Accept</button>
+  <button id="reject" title="Reject All" data-test="reject">Reject All</button>
+</div>
+<script>
+const action = new URLSearchParams(location.search).get('action');
+document.getElementById('reject').addEventListener('click', () => {
+  if (action === 'remove') window.frameElement?.remove();
+  else if (action && action !== 'noop') window.parent.postMessage(action, '*');
+});
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

@@ -55,6 +55,18 @@ It watches the page for 30 seconds after it's shown. In **Decline** mode it trie
    still showing. If it had frozen page scrolling, unfreeze it. This waits (up to 6 s more) while the page
    is still loading or a decline is under way, so late banners get declined rather than hidden.
 
+After a reject or Save click, `finish` checks 1.5 seconds later that the clicked button is no longer
+visible before reporting a decline. For a reject click inside an iframe, the outer page often removes or
+hides (`display: none`) the `<iframe>` itself without changing what is inside it, which the frame can't
+see by looking at its own button. So there, until that check is due, two more signs count as the banner
+going away: the frame unloading (`pagehide`), and the button being out of view at the check after it was
+in view (an `IntersectionObserver`). A button that was never in view (a frame below the fold), one that
+left view and came back, and a frame hidden in the same instant as the click, before the browser has
+said the button was in view, say nothing: those end as before, unreported. Both signs are confirmed
+only for same-origin frames in WebKit's test runner, with a stand-in for the background script; in
+Safari itself they are not yet verified: `tests/demo-frame.html` is the page to try with the installed
+extension.
+
 **Pay-or-consent walls:** a pay button is not clicked. It is a button whose own text shows a word
 such as "suscribirse" or "pay", or a price (a number beside €, $ or £), in the words seen on real walls
 so far; hidden text and the `aria-label` don't count. It is never a reject, a Save, a settings button
@@ -104,8 +116,9 @@ python3 -m http.server 8765 --bind 127.0.0.1
   extension stops watching it (30 seconds after the page loads), so a late wrong click still fails.
 - **Mock banners, one by one:** open <http://127.0.0.1:8765/tests/>. On each page, keep the tab in front,
   wait 32 seconds (the extension watches a page for 30), then run `__result()` in the browser console;
-  it must say `pass: true`. There are 30 pages that should be declined, 4 that should open the settings
-  and then hide the banner, 10 that should be hidden without a click, and 4 where nothing may be touched.
+  it must say `pass: true`. There are 34 pages that should be declined, 4 that should open the settings
+  and then hide the banner, 10 that should be hidden without a click, 4 where nothing may be touched,
+  and 5 where a decline must not be reported.
 - **Labels:** `node tests/labels.mjs`. Exits with 1 if a label is classified wrong.
 - **Popup:** <http://127.0.0.1:8765/tests/popup-preview.html> shows the real popup in every state.
   Add `?lang=ja` or `?lang=es` for the translations and `&repo=1` to show the Report link.

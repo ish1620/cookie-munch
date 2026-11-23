@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><link rel="stylesheet" href="style.css"><script src="../harness.js"></script></head>
+<body>
+<div data-banner>
+  <p>We and our partners use cookies and store and/or access information on a device.</p>
+  <div>
+    <label><input type="checkbox" data-test="necessary" checked disabled> Strictly necessary</label>
+    <label><input type="checkbox" data-test="analytics" checked> Analytics</label>
+  </div>
+  <button id="save" data-test="save">Save my choices</button>
+  <button data-test="accept" data-close>Accept all</button>
+</div>
+<script>
+const action = new URLSearchParams(location.search).get('action');
+const save = document.getElementById('save');
+if (action === 'close') save.setAttribute('data-close', '');
+else if (action === 'hide') save.addEventListener('click', () => window.parent.postMessage('hide', '*'));
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

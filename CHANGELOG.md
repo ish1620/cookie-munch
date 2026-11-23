@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- A decline made inside an iframe is now reported when the page around it removes the frame or
+  hides it after the reject click. Confirmed on test pages in WebKit; not yet verified in Safari
+  itself.
 - Pay-or-consent walls: a button that costs money or a subscription ("Rechazar por 36€ / año",
   "Refuser et s'abonner") is not clicked, where its label uses the pay words seen on such walls so
   far. Where the banner still offers a free refusal (a plain reject button, or settings with

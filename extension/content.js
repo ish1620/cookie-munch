@@ -520,27 +520,65 @@
   }
 
   // Click a reject/save button, then check a moment later that it went away. Only then
-  // does it count as declined.
+  // does it count as declined. Inside an iframe, a reject click can make the outer page
+  // remove or hide the frame itself, which isVisible() can't see from inside. So there, until
+  // the check is due, two more signs count: the frame unloading, and the button being out of
+  // view at the check after it was in view (a button never in view, in a frame below the
+  // fold, says nothing).
   function finish(el, platform, how, previous = stage) {
+    const watchFrame = !IS_TOP && how === 'rejected';
+    const due = performance.now() + VERIFY_AFTER_MS;
+    let settled = false;
+    let verifyTimer = null;
+    let frameObserver = null;
+    let wasInView = false;
+    let outOfView = false;
+    // The browser's own event only, not one a page script sends.
+    const onPageHide = (event) => { if (event.isTrusted && performance.now() <= due) settle(true, true); };
+    const cleanup = () => {
+      clearTimeout(verifyTimer);
+      frameObserver?.disconnect();
+      if (watchFrame) removeEventListener('pagehide', onPageHide);
+    };
+    const settle = (gone, unloading = false) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (!gone && clicks < MAX_CLICKS) {
+        log('banner still showing, trying another button');
+        stage = previous;
+        schedule(0);
+      } else {
+        if (gone) report(platform, how);
+        stage = 'done';
+        stop();
+        if (!unloading) hideLeftovers(); // tidy up anything the banner left behind; a frame that is going needs none
+      }
+    };
+
+    if (watchFrame) addEventListener('pagehide', onPageHide); // before the click: it can unload the frame at once
     if (!click(el)) { // not safe to click after all: look for another button
+      cleanup();
       stage = previous;
       schedule(0);
       return;
     }
     log(`${how}: clicked "${(el.textContent || el.value || el.getAttribute('aria-label') || '').trim()}"`, platform ? `(${platform})` : '');
+    if (settled) return; // the click itself unloaded the frame
     stage = 'verifying';
-    setTimeout(() => {
-      if (isVisible(el) && clicks < MAX_CLICKS) {
-        log('banner still showing, trying another button');
-        stage = previous;
-        schedule(0);
-      } else {
-        if (!isVisible(el)) report(platform, how);
-        stage = 'done';
-        stop();
-        hideLeftovers(); // tidy up anything the banner left behind
-      }
-    }, VERIFY_AFTER_MS);
+    if (watchFrame && typeof IntersectionObserver === 'function') {
+      // Only what the browser says until the check is due counts, and only the last word:
+      // a button that left view and came back is still there.
+      frameObserver = new IntersectionObserver((entries) => {
+        if (performance.now() > due) return;
+        for (const entry of entries) {
+          if (entry.isIntersecting) wasInView = true;
+          outOfView = wasInView && !entry.isIntersecting;
+        }
+      });
+      frameObserver.observe(el);
+    }
+    verifyTimer = setTimeout(() => settle(!isVisible(el) || outOfView), VERIFY_AFTER_MS);
   }
 
   const pause = (ms) => new Promise((done) => setTimeout(done, ms));

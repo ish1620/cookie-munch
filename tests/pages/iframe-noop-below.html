@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Iframe reject does nothing, out of view all along</title>
+<meta name="expect" content="reject">
+<meta name="expect-report" content="">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Iframe reject does nothing, out of view all along</h1>
+<p>Expect: clicks "Reject All" in the iframe; nothing closes, and nothing is reported.
+The iframe sits far below what the window shows, so its button was never in view: that is no sign the banner went away.</p>
+<iframe src="iframe-action-inner.html?action=noop" title="consent"
+        style="position:absolute;top:4000px;left:16px;width:520px;height:200px;border:1px solid #ccc;background:#fff"></iframe>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

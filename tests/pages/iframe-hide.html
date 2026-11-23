@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Iframe hidden on reject</title>
+<meta name="expect" content="reject">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="rejected">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Iframe hidden on reject</h1>
+<p>Expect: clicks "Reject All" in the iframe; a moment later the page sets display: none on the iframe (leaving the banner inside as it is), and "rejected" is reported.</p>
+<iframe src="iframe-action-inner.html?action=hide" title="consent"
+        style="position:fixed;bottom:16px;left:16px;width:520px;height:200px;border:1px solid #ccc;background:#fff"></iframe>
+<script>
+window.addEventListener('message', (event) => {
+  if (event.data === 'hide') setTimeout(() => { document.querySelector('iframe').style.display = 'none'; }, 300);
+});
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

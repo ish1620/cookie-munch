@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Iframe reject does nothing</title>
+<meta name="expect" content="reject">
+<meta name="expect-report" content="">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Iframe reject does nothing</h1>
+<p>Expect: clicks "Reject All" in the iframe; nothing closes, and nothing is reported.</p>
+<iframe src="iframe-action-inner.html?action=noop" title="consent"
+        style="position:fixed;bottom:16px;left:16px;width:520px;height:200px;border:1px solid #ccc;background:#fff"></iframe>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

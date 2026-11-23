@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Save in an iframe that is hidden</title>
+<meta name="expect" content="analytics,save">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Save in an iframe that is hidden</h1>
+<p>Expect: switches Analytics off and clicks "Save my choices"; the page sets display: none on the iframe (leaving the banner inside as it is). Save does not use the reject-only frame check, so nothing is reported.</p>
+<iframe src="iframe-save-inner.html?action=hide" title="consent"
+        style="position:fixed;bottom:16px;left:16px;width:520px;height:200px;border:1px solid #ccc;background:#fff"></iframe>
+<script>
+window.addEventListener('message', (event) => {
+  if (event.data === 'hide') document.querySelector('iframe').style.display = 'none';
+});
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

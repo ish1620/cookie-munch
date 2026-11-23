@@ -36,8 +36,22 @@ const rulesReady = new Promise((resolve) => {
   document.head.append(script);
 });
 
+// Record every frame's clicks and messages on the top window so they survive a frame being
+// removed or navigated away.
+const record = (() => {
+  try {
+    window.top.__clicks ??= [];
+    window.top.__messages ??= [];
+    return window.top;
+  } catch {
+    window.__clicks ??= [];
+    window.__messages ??= [];
+    return window;
+  }
+})();
+
 async function fakeBackground(message) {
-  window.__messages.push(message);
+  record.__messages.push(message);
   if (message.type === 'siteSelectors') {
     await rulesReady;
     return CookieRules.siteSelectors(message.host);
@@ -65,14 +79,11 @@ window.browser = {
 
 const VIEW_DRAW_MS = 400; // a real panel draws a view a moment after the click that opens it
 
-window.__clicks = [];
-window.__messages = [];
-
 // Record what was clicked (the nearest data-test label).
 document.addEventListener('click', (event) => {
   const target = event.composedPath()[0];
   const tagged = target.closest?.('[data-test]');
-  window.__clicks.push(tagged ? tagged.dataset.test : String(target.tagName).toLowerCase());
+  record.__clicks.push(tagged ? tagged.dataset.test : String(target.tagName).toLowerCase());
 }, true);
 
 // Mock banner behavior.
@@ -121,15 +132,14 @@ window.__result = () => {
   // checkVisibility() inside a frame doesn't look at the hidden <iframe> around it.)
   const frames = [...document.querySelectorAll('iframe')];
   const docs = [document, ...frames.filter((f) => f.checkVisibility()).map((f) => f.contentDocument).filter(Boolean)];
-  const wins = [window, ...[...document.querySelectorAll('iframe')].map((f) => f.contentWindow)];
-  const clicks = wins.flatMap((w) => w.__clicks ?? []).join(',');
+  const clicks = record.__clicks.join(',');
   const expect = meta('expect');
   const bannersLeft = docs.flatMap((d) => allElements(d, '[data-banner]')).filter((el) => el.checkVisibility()).length;
   const notKept = docs.flatMap((d) => allElements(d, '[data-keep]')).filter((el) => !el.checkVisibility()).length;
   const scrollLocked = [document.documentElement, document.body]
     .some((el) => getComputedStyle(el).overflow.includes('hidden')) || getComputedStyle(document.body).position === 'fixed';
   const expectHidden = meta('expect-hidden') === 'yes';
-  const messages = wins.flatMap((w) => w.__messages ?? []);
+  const messages = record.__messages;
   const report = messages.filter((m) => m.type === 'declined').map((m) => m.how).join(',');
   const expectReport = meta('expect-report');
   return {

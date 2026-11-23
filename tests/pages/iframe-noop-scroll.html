@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Iframe reject does nothing, scrolled out of view later</title>
+<meta name="expect" content="reject">
+<meta name="expect-report" content="">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Iframe reject does nothing, scrolled out of view later</h1>
+<p>Expect: clicks "Reject All" in the iframe; nothing closes, the page scrolls the iframe out of view 3 s later, and nothing is reported.</p>
+<iframe src="iframe-action-inner.html?action=noop-scroll" title="consent"
+        style="width:520px;height:200px;border:1px solid #ccc;background:#fff"></iframe>
+<div style="height:3000px">Tall page content…</div>
+<script>
+window.addEventListener('message', (event) => {
+  if (event.data === 'noop-scroll') setTimeout(() => window.scrollTo(0, 2000), 3000);
+});
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>
