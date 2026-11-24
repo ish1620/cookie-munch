@@ -126,6 +126,19 @@ body.munched .crumb:nth-of-type(3) { --dx: 4px; --dy: 26px; animation-delay: 0.5
 }
 
 .site-label { display: block; color: var(--muted); font-size: 12px; }
+
+/* "Also hide other popups" */
+.option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0 0;
+  cursor: pointer;
+}
+
+.option-label { display: block; font-weight: 500; }
+.option-row .hint { display: block; }
 .host { display: block; font-weight: 600; word-break: break-all; }
 
 input[role="switch"] {

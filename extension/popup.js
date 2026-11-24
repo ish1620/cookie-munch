@@ -54,6 +54,16 @@ function setupModePicker(mode) {
   }
 }
 
+// "Also hide other popups": off by default; like the mode, it applies from the next page load.
+function setupOtherPopups(on) {
+  const box = $('other-popups');
+  box.checked = on === true;
+  box.addEventListener('change', async () => {
+    await api.storage.local.set({ hideOtherPopups: box.checked });
+    $('reload-hint').hidden = false;
+  });
+}
+
 function platformName() {
   const ua = navigator.userAgent;
   if (/iPhone/.test(ua)) return 'iPhone';
@@ -82,10 +92,11 @@ function setupReport(host, mode) {
 async function main() {
   translatePage();
   const [tab] = await api.tabs.query({ active: true, currentWindow: true });
-  const { total = 0, disabledSites = [], mode = 'decline' } =
-    await api.storage.local.get({ total: 0, disabledSites: [], mode: 'decline' });
+  const { total = 0, disabledSites = [], mode = 'decline', hideOtherPopups = false } =
+    await api.storage.local.get({ total: 0, disabledSites: [], mode: 'decline', hideOtherPopups: false });
   showStats(total);
   setupModePicker(mode);
+  setupOtherPopups(hideOtherPopups); // before the early returns: it works on any tab
 
   let url = null;
   try {

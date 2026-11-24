@@ -41,6 +41,8 @@
   "modeHide": { "message": "Hide only" },
   "helpDecline": { "message": "Clicks “Reject” on cookie banners. Hides the ones that can’t be declined." },
   "helpHide": { "message": "Like Brave: hides banners and stops their scripts loading. Never answers them." },
+  "otherPopupsLabel": { "message": "Also hide other popups" },
+  "otherPopupsHelp": { "message": "Hides newsletter sign-up boxes, app download prompts and sites’ own “allow notifications?” boxes. Never clicks inside them." },
   "reloadHint": { "message": "Reload the page to apply." },
   "report": { "message": "Missed a banner here? Report it" },
   "reportHint": { "message": "Opens a GitHub issue with this site’s name and your setup (mode, version, Mac or iPhone) filled in. Nothing is sent unless you submit it." }

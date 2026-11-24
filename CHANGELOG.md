@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- New option in the popup, "Also hide other popups" (off by default, in either mode; in English, Japanese and
+  Spanish): it also hides newsletter sign-up boxes, app download banners and sites' own "allow
+  notifications?" boxes, using EasyList's Fanboy Newsletter and Fanboy Notifications lists, and never clicks
+  inside them. It hides sign-up boxes inside a page too, and on sites the lists name it lets a page scroll
+  again (only `overflow`, `position` or `height` on the page itself). Safari's own app banner and
+  notification sheet stay. The setting is stored on your device. The weekly list update now refreshes these
+  two lists too. Confirmed on test pages in WebKit; not yet verified in Safari itself.
 - The Mac and iPhone welcome screen now has a "Try it on a demo page" button (in English, Japanese and
   Spanish) that opens a static demo page in Safari, so you can see Cookie Munch decline a cookie banner right
   away. The page speaks English, Japanese and Spanish, stores and sends nothing, and says what to check if

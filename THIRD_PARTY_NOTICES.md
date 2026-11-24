@@ -20,3 +20,17 @@ To respect both, Cookie Munch takes the stricter reading: the two converted rule
 **Creative Commons Attribution-ShareAlike 3.0** (<https://creativecommons.org/licenses/by-sa/3.0/>), with
 attribution to the EasyList authors. Any changes made in converting them are released under the same terms.
 This applies only to those two files. The rest of Cookie Munch is under the MIT licence in `LICENSE`.
+
+## Fanboy's Newsletter List and Fanboy's Notifications List
+
+`extension/rules/other-popups.json`, used by "Also hide other popups", is converted from EasyList's
+[Fanboy's Newsletter List](https://secure.fanboy.co.nz/fanboy-newsletter.txt) and
+[Fanboy's Notifications List](https://secure.fanboy.co.nz/fanboy-notifications.txt) (<https://easylist.to>,
+source: <https://github.com/easylist/easylist>) by `tools/build_cookie_rules.py`. It contains a subset of
+the two lists' rules, reformatted for Safari.
+
+The lists are © the EasyList authors (<https://easylist.to/>). Their headers name Creative Commons
+Attribution 3.0 (checked on 2026-11-24), and EasyList's licence page gives the dual licence described above;
+Cookie Munch takes the same stricter reading: `extension/rules/other-popups.json` is shared under
+**Creative Commons Attribution-ShareAlike 3.0**, with attribution to the EasyList authors, and any changes
+made in converting it are released under the same terms.

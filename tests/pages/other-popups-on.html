@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Other popups, option on</title>
+<meta name="expect" content="">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="">
+<meta name="hide-other-popups" content="yes">
+<meta name="other-popups-host" content="fodors.com">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Other popups, option on</h1>
+<article data-keep>
+  <p>Expect: no clicks, nothing told to the popup, and the sign-up box, the notification pre-prompt and
+  the app banner hidden by the lists. This article stays.</p>
+  <div style="height: 1200px">Story text…</div>
+</article>
+<div id="newsletter-popup" class="fixed" style="bottom: 200px" data-banner>
+  <p>Get the week's best stories in your inbox.</p>
+  <input type="email" placeholder="Email"> <button data-test="subscribe" data-close>Subscribe</button>
+  <button data-test="close" data-close>Close</button>
+</div>
+<div id="onesignal-slidedown-container" class="fixed" style="top: 16px; bottom: auto" data-banner>
+  <p>We'd like to show you notifications for the latest news.</p>
+  <button data-test="allow" data-close>Allow</button>
+  <button data-test="later" data-close>Later</button>
+</div>
+<div id="appInstallNotification" class="fixed" data-banner>
+  <p>Read faster in our app.</p>
+  <button data-test="get-app" data-close>Open the app</button>
+  <button data-test="not-now" data-close>Not now</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

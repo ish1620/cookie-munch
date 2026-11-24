@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Other popups, option off (the default)</title>
+<meta name="expect" content="">
+<meta name="expect-report" content="">
+<meta name="other-popups-host" content="fodors.com">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Other popups, option off (the default)</h1>
+<p>Expect: no clicks, and the sign-up box and the notification pre-prompt stay. Both are in the lists
+(the box under a site they name), but "Also hide other popups" is off unless it is switched on, and the
+page sets nothing.</p>
+<div id="newsletter-popup" class="fixed" style="bottom: 200px" data-keep>
+  <p>Get the week's best stories in your inbox.</p>
+  <input type="email" placeholder="Email"> <button data-test="subscribe" data-close>Subscribe</button>
+  <button data-test="close" data-close>Close</button>
+</div>
+<div id="onesignal-slidedown-container" class="fixed" style="top: 16px; bottom: auto" data-keep>
+  <p>We'd like to show you notifications for the latest news.</p>
+  <button data-test="allow" data-close>Allow</button>
+  <button data-test="later" data-close>Later</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

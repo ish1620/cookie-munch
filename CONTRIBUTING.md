@@ -11,7 +11,9 @@ Thanks for helping. The most useful contributions, in order:
 Found a security problem? Please report it privately, as described in [SECURITY.md](SECURITY.md).
 
 Cookie Munch keeps three promises. Changes that break one of them can't be merged:
-it never clicks Accept, it never sends data anywhere, and it never touches the page beyond the banner.
+it never clicks Accept, it never sends data anywhere, and it never touches the page beyond the cookie banner,
+except that with "Also hide other popups" on it also hides newsletter sign-up boxes, app download prompts and a
+site's own notification pre-prompts, and never clicks inside them.
 
 ## How it's put together
 
@@ -20,9 +22,10 @@ it never clicks Accept, it never sends data anywhere, and it never touches the p
 | `extension/manifest.json` | What the extension is and which files Safari runs |
 | `extension/content.js` | Finds banners, declines or hides them (runs on every page and in iframes) |
 | `extension/background.js` | Adds hiding CSS, switches script blocking, toolbar ✓, running total |
-| `extension/rules.js` | Turns the cookie list into CSS for one site |
+| `extension/rules.js` | Turns a list into CSS for one site (one instance per list) |
 | `extension/cookie-rules.json` | The cookie list's hiding rules (about 34,000 selectors) |
 | `extension/rules/cookie-scripts.json` | The cookie list's script-blocking rules (Hide-only mode) |
+| `extension/rules/other-popups.json` | "Also hide other popups": the Newsletter and Notifications lists' hiding rules and scroll fixes |
 | `extension/popup.*`, `config.js` | The toolbar popup; `config.js` holds the repository URL |
 | `extension/_locales/` | Popup and store text in English, Japanese and Spanish |
 | `xcode/Cookie Munch/` | The Xcode project that wraps the extension in a Mac and iPhone app |
@@ -111,6 +114,17 @@ iframes (Sourcepoint, TrustArc, …), and the background script turns on the scr
 Label matching is off on Gmail, Google Calendar, Outlook and Teams (`GENERIC_SKIP_HOSTS`), because
 "Decline" there can mean a meeting invite.
 
+With **"Also hide other popups"** on (off by default; `hideOtherPopups` in `storage.local`), in either mode,
+`start()` first asks for the CSS of EasyList's Fanboy Newsletter and Fanboy Notifications lists
+(`extension/rules/other-popups.json`) and waits for it before its first look for a banner, so a sign-up box
+is hidden before a "No thanks" in it could pass for a reject. Not on a site switched off. Its generic rules go
+to the main page only, not to frames or the `GENERIC_SKIP_HOSTS` apps. These rules only hide: they are their
+own rule set in `rules.js`, never part of `siteSelectors`, so nothing they match is taken for a cookie banner
+or clicked. The background script loads that file on the first request and inserts nothing while the option
+is off. The only style they write besides `display: none` is a scroll fix on `html` or `body` for a site the
+lists name: `overflow`, `overflow-x`, `overflow-y`, `position` or `height`, set to a plain keyword; the
+converter drops any other form, `rules.js` drops it again, and `tests/check_extension.mjs` fails on it.
+
 ## Adding a consent platform or a label
 
 **A platform:** find the reject button with Safari's Web Inspector (right-click it → Inspect) and add a line
@@ -153,14 +167,18 @@ python3 -m http.server 8765 --bind 127.0.0.1
   it must say `pass: true`. There are 45 pages that should be declined, 1 that should be declined once and
   then hide the banner on the page it loads (it goes on to a second page, not listed, and is judged there),
   13 that should open the settings and then hide the banner, 19 that should be hidden without a click, 6 where
-  nothing may be touched, and 5 where a decline must not be reported.
+  nothing may be touched, 5 where a decline must not be reported, and 7 for "Also hide other popups".
+  Those 7 pose as two sites the lists name (`other-popups-host` in each page), since most of the lists'
+  rules are for named sites: when a list update drops those sites' rules the pages fail, and they are
+  pointed at another site the lists name.
 - **Labels:** `node tests/labels.mjs`. Exits with 1 if a label is classified wrong.
 - **Popup:** <http://127.0.0.1:8765/tests/popup-preview.html> shows the real popup in every state.
   Add `?lang=ja` or `?lang=es` for the translations and `&repo=1` to show the Report link.
 - **Syntax and consistency:** `node --check` on each file in `extension/`, `tests/harness.js`, the `.js`
   files in `tests/live/` and the `.mjs` files in `tests/`, `tests/live/` and `tools/`, then
-  `node tests/check_extension.mjs` (manifest files, translations, version numbers, tab status precedence
-  and popup outcome mapping).
+  `node tests/check_extension.mjs` (manifest files, translations, version numbers, safe hiding rules and
+  scroll fixes in both rule files, tab status precedence, "Also hide other popups" in the background script,
+  and the popup's outcome mapping and switch).
 - **Real sites (local only):** `npm ci`, then `npx playwright install webkit` once, then `npm run test:live`.
   It opens each site in `tests/live/sites.json` once, in Playwright's WebKit (Spanish, English and French
   banners, and a Japanese site whose banner comes up in English for visitors from the EU), runs
@@ -215,16 +233,24 @@ If a build fails with `Embedded binary is not signed with the same certificate a
 
 ## Updating the cookie list
 
-The list changes every few days. A scheduled workflow (`.github/workflows/cookie-list.yml`) refreshes it
-weekly, opens a pull request, and starts the checks and the mock pages on it. To do it by hand:
+The lists change every few days. A scheduled workflow (`.github/workflows/cookie-list.yml`) refreshes the
+cookie list and the two lists behind "Also hide other popups" weekly, opens one pull request, and starts the
+checks and the mock pages on it. To do it by hand:
 
 ```bash
 curl -o /tmp/fanboy-cookiemonster.txt https://secure.fanboy.co.nz/fanboy-cookiemonster.txt
-python3 -I tools/build_cookie_rules.py /tmp/fanboy-cookiemonster.txt
+curl -o /tmp/fanboy-newsletter.txt https://secure.fanboy.co.nz/fanboy-newsletter.txt
+curl -o /tmp/fanboy-notifications.txt https://secure.fanboy.co.nz/fanboy-notifications.txt
+python3 -I tools/build_cookie_rules.py /tmp/fanboy-cookiemonster.txt \
+  --other-popups /tmp/fanboy-newsletter.txt /tmp/fanboy-notifications.txt
 ```
 
 The converter keeps plain CSS selectors and simple URL rules, and skips the few that use ad-blocker-only
-syntax.
+syntax. From the Newsletter and Notifications lists it keeps hiding rules, their exceptions and the strict
+scroll fixes only, and prints what it kept and dropped. It stops when a list has no `! Last modified:` line,
+or when the Newsletter or Notifications list lacks the comments naming its two hiding files
+(`fanboy_newsletter_general_hide.txt` and `_specific_hide.txt`, or the same for `notifications`): the list
+has changed shape and needs a look first.
 
 ## Icons
 

@@ -17,6 +17,10 @@
  *
  * Hide only (like Brave): never answer the banner, just hide it, using
  * EasyList's Cookie List (see rules.js) plus the banners steps 1-3 can spot.
+ *
+ * "Also hide other popups" (off by default), in either mode: the Newsletter and Notifications
+ * lists' CSS hides sign-up boxes, app banners and notification pre-prompts. Hiding only: their
+ * rules never reach the banner search, so nothing in those boxes is ever clicked.
  */
 (() => {
   'use strict';
@@ -952,13 +956,22 @@
     if (!want.site && !want.generic) return;
     askedToHide.site = true;
     askedToHide.generic ||= want.generic;
-    const reply = await send({ type: 'hide', host: location.hostname, ...want });
-    if (reply?.css) {
-      // The background script couldn't add it itself; add it as a <style> element.
-      const style = document.createElement('style');
-      style.textContent = reply.css;
-      (document.head || document.documentElement).append(style);
-    }
+    addStyle((await send({ type: 'hide', host: location.hostname, ...want }))?.css);
+  }
+
+  // When the background script couldn't add its CSS itself, add it as a <style> element.
+  function addStyle(css) {
+    if (!css) return;
+    const style = document.createElement('style');
+    style.textContent = css;
+    (document.head || document.documentElement).append(style);
+  }
+
+  // "Also hide other popups": that list's CSS for this frame, by its own request (never through
+  // siteRule, which marks cookie banners). Its generic rules go to the main page only, and not to
+  // the web apps in GENERIC_SKIP_HOSTS.
+  async function hideOtherPopups() {
+    addStyle((await send({ type: 'hideOtherPopups', host: location.hostname, generic: IS_TOP && !genericOff }))?.css);
   }
 
   function safeToHide(banner) {
@@ -1260,11 +1273,13 @@
     const site = siteKey(host);
     let settings = {};
     try {
-      settings = (await api?.storage?.local.get({ disabledSites: [], mode: 'decline', lastDecline: null })) ?? {};
+      settings = (await api?.storage?.local.get({ disabledSites: [], mode: 'decline', lastDecline: null, hideOtherPopups: false })) ?? {};
     } catch {}
     if ((settings.disabledSites ?? []).includes(site)) return;
     mode = settings.mode === 'hide' ? 'hide' : 'decline';
     genericOff = GENERIC_SKIP_HOSTS.includes(host);
+    // In both modes and at once: Decline must not meet these boxes before they are hidden.
+    const otherPopupsHidden = settings.hideOtherPopups === true ? hideOtherPopups() : null;
 
     // No second try: a decline on this site moments ago may have loaded this very page, with the
     // banner on it again. Then this page only hides, for its whole watch, as in Hide-only mode.
@@ -1289,6 +1304,7 @@
     if (mode === 'hide') requestHide(); // as early as possible, before the banner is drawn
     await domReady();
     siteRule = await loadSiteRule();
+    await otherPopupsHidden; // hidden before the first look for a banner, so "No thanks" is never a candidate
     if (mode === 'hide') {
       requestHide(); // now that the page exists, consent iframes also get the generic rules
       const unfreeze = setInterval(unlockScroll, 1000);

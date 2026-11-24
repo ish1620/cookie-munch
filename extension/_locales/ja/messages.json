@@ -41,6 +41,8 @@
   "modeHide": { "message": "隠すだけ" },
   "helpDecline": { "message": "Cookieバナーの「拒否」を押します。拒否できないバナーは隠します。" },
   "helpHide": { "message": "Braveと同じ方式：バナーを隠し、そのスクリプトの読み込みを止めます。回答はしません。" },
+  "otherPopupsLabel": { "message": "他のポップアップも隠す" },
+  "otherPopupsHelp": { "message": "ニュースレターの登録欄、アプリのダウンロード案内、サイト独自の「通知を許可しますか」の案内を隠します。中はクリックしません。" },
   "reloadHint": { "message": "ページを再読み込みすると反映されます。" },
   "report": { "message": "見逃したバナーを報告する" },
   "reportHint": { "message": "このサイト名と使用環境（モード、バージョン、Mac／iPhone）を入れたGitHubのIssue画面を開きます。送信しない限り、何も送られません。" }

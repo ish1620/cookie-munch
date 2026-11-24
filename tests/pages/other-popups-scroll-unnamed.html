@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Other popups on: no scroll fix for this site</title>
+<meta name="expect" content="">
+<meta name="expect-report" content="">
+<meta name="hide-other-popups" content="yes">
+<meta name="expect-scroll-locked" content="yes">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Other popups on: no scroll fix for this site</h1>
+<p data-keep>Expect: no clicks, and the page stays unable to scroll: the lists have no scroll fix for this site.</p>
+<div style="height:3000px">Tall page content…</div>
+<script>
+  // A sign-up box froze scrolling (no cookie or consent mark, so the cookie code leaves it alone).
+  document.body.style.overflow = 'hidden';
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

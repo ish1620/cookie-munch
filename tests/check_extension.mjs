@@ -1,5 +1,6 @@
 // Static and unit checks for the extension folder: manifest, translations, version numbers,
-// tab status precedence in background.js, and popup outcome mapping in popup.js.
+// safe hiding rules, tab status precedence and "Also hide other popups" in background.js, and the
+// popup's outcome mapping and its "Also hide other popups" switch in popup.js.
 // Run: node tests/check_extension.mjs   (exits non-zero on any problem it finds)
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import vm from 'node:vm';
@@ -55,12 +56,38 @@ const used = new Set([
 ]);
 for (const key of used) if (!base?.[key]) problems.push(`"${key}" is used but not in _locales/${manifest.default_locale}`);
 
-// Hiding rules: every selector stays a plain selector (no braces that could end the CSS rule, no comments).
-const cookieRules = JSON.parse(read('extension/cookie-rules.json'));
+// Hiding rules, in both JSON files: each has rules of its own, and every selector stays a plain
+// selector (no braces that could end the CSS rule, no comments).
 const UNSAFE = /[{}]|\/\*|\*\//;
-const allSelectors = [cookieRules.generic, ...Object.values(cookieRules.sites), ...Object.values(cookieRules.exceptions)].flat();
-const unsafe = allSelectors.filter((s) => typeof s !== 'string' || UNSAFE.test(s));
-if (unsafe.length) problems.push(`${unsafe.length} unsafe hiding selectors, e.g. ${JSON.stringify(unsafe[0]).slice(0, 80)}`);
+const ruleFiles = { 'extension/cookie-rules.json': null, 'extension/rules/other-popups.json': null };
+let allSelectors = [];
+for (const file of Object.keys(ruleFiles)) {
+  const rules = JSON.parse(read(file));
+  ruleFiles[file] = rules;
+  const sites = Object.values(rules.sites ?? {}).flat();
+  if (!rules.generic?.length || !sites.length) {
+    problems.push(`${file} has no rules of its own (${rules.generic?.length ?? 0} generic, ${sites.length} for named sites)`);
+  }
+  const selectors = [rules.generic ?? [], sites, ...Object.values(rules.exceptions ?? {})].flat();
+  const unsafe = selectors.filter((s) => typeof s !== 'string' || UNSAFE.test(s));
+  if (unsafe.length) problems.push(`${file}: ${unsafe.length} unsafe hiding selectors, e.g. ${JSON.stringify(unsafe[0]).slice(0, 80)}`);
+  allSelectors = allSelectors.concat(selectors);
+}
+
+// Scroll fixes (other-popups.json): the one style besides display: none. Each must be on html, body
+// or the two, set only overflow, overflow-x, overflow-y, position or height, to a plain keyword.
+const SCROLL_SELECTOR = /^(html|body|html,body|body,html)$/;
+const SCROLL_DECLARATION = (d) => Array.isArray(d) && d.length === 2 &&
+  /^(overflow|overflow-x|overflow-y|position|height)$/.test(d[0]) && typeof d[1] === 'string' && /^[a-z]+(-[a-z]+)*$/.test(d[1]);
+const scrollFixes = Object.entries(ruleFiles['extension/rules/other-popups.json'].scroll ?? {})
+  .flatMap(([site, fixes]) => (Array.isArray(fixes) ? fixes : [fixes]).map((fix) => [site, fix]));
+if (!scrollFixes.length) problems.push('extension/rules/other-popups.json has no scroll fixes');
+for (const [site, fix] of scrollFixes) {
+  const [selector, declarations] = Array.isArray(fix) ? fix : [];
+  if (!SCROLL_SELECTOR.test(selector ?? '') || !Array.isArray(declarations) || !declarations.length || !declarations.every(SCROLL_DECLARATION)) {
+    problems.push(`other-popups.json: a scroll fix for ${site} outside the allowed form: ${JSON.stringify(fix).slice(0, 120)}`);
+  }
+}
 
 // Version: the manifest, the Xcode project and the newest changelog entry agree.
 const xcode = read('xcode/Cookie Munch/Cookie Munch.xcodeproj/project.xcproj');
@@ -72,14 +99,12 @@ if (xcodeVersions.size !== 1 || short([...xcodeVersions][0]) !== short(manifest.
 }
 if (changelog !== manifest.version) problems.push(`CHANGELOG.md's newest entry is ${changelog}, manifest says ${manifest.version}`);
 
-// Tab status precedence: run background.js and verify decline > paywall > hidden on one tab.
-async function checkBackgroundStatus() {
+// Run background.js as Safari would, with rules.js loaded by its importScripts() and the rule files
+// fetched from extension/. Returns its message sender and what it did.
+function startBackground(localStore = {}) {
   const tick = () => new Promise((resolve) => setTimeout(resolve, 1));
-  const localStore = {};
   const sessionStore = {};
-  let onMessage = null;
-  let onUpdated = null;
-  const badges = {};
+  const seen = { onMessage: null, onUpdated: null, badges: {}, inserted: [], fetched: [] };
   const noop = { addListener() {} };
   const browser = {
     runtime: {
@@ -87,7 +112,7 @@ async function checkBackgroundStatus() {
       getURL: (p) => p,
       onInstalled: noop,
       onStartup: noop,
-      onMessage: { addListener(fn) { onMessage = fn; } },
+      onMessage: { addListener(fn) { seen.onMessage = fn; } },
     },
     storage: {
       local: {
@@ -101,14 +126,13 @@ async function checkBackgroundStatus() {
       },
       onChanged: noop,
     },
-    action: { setBadgeText: async ({ tabId, text }) => { badges[tabId] = text; }, setBadgeBackgroundColor: async () => {} },
-    tabs: { onUpdated: { addListener(fn) { onUpdated = fn; } }, onRemoved: noop },
+    action: { setBadgeText: async ({ tabId, text }) => { seen.badges[tabId] = text; }, setBadgeBackgroundColor: async () => {} },
+    tabs: { onUpdated: { addListener(fn) { seen.onUpdated = fn; } }, onRemoved: noop },
     declarativeNetRequest: { updateEnabledRulesets: async () => {} },
+    scripting: { insertCSS: async ({ target, css }) => { seen.inserted.push({ tabId: target.tabId, css }); } },
   };
   const ctx = vm.createContext({
     browser,
-    importScripts() {},
-    CookieRules: { load: async () => {}, cssFor: () => '', siteSelectors: () => [] },
     console,
     Date,
     Map,
@@ -116,18 +140,38 @@ async function checkBackgroundStatus() {
     Promise,
     Number,
     Object,
+    Array,
+    JSON,
     setTimeout,
+    fetch: async (path) => {
+      seen.fetched.push(path);
+      const text = read(`extension/${path}`);
+      return { json: async () => JSON.parse(text) };
+    },
   });
   ctx.globalThis = ctx;
+  ctx.importScripts = (...files) => {
+    for (const file of files) vm.runInContext(read(`extension/${file}`), ctx, { filename: `extension/${file}` });
+  };
   vm.runInContext(read('extension/background.js'), ctx, { filename: 'extension/background.js' });
+  const send = (message, sender) => new Promise((resolve) => {
+    const asyncReply = seen.onMessage?.(message, sender ?? {}, resolve);
+    if (!asyncReply) resolve(undefined);
+  });
+  return { seen, send, localStore };
+}
+
+// Tab status precedence: run background.js and verify decline > paywall > hidden on one tab.
+async function checkBackgroundStatus() {
+  const { seen, send: sendAs } = startBackground();
+  const { badges } = seen;
+  const onMessage = seen.onMessage;
+  const onUpdated = seen.onUpdated;
   if (!onMessage) {
     problems.push('background.js did not register a runtime.onMessage listener');
     return;
   }
-  const send = (message, tabId) => new Promise((resolve) => {
-    const asyncReply = onMessage(message, tabId == null ? {} : { tab: { id: tabId } }, resolve);
-    if (!asyncReply) resolve(undefined);
-  });
+  const send = (message, tabId) => sendAs(message, tabId == null ? {} : { tab: { id: tabId } });
   const wait = () => new Promise((resolve) => setTimeout(resolve, 15));
   const cases = [
     ['paywall then hidden keeps paywall', ['paywall', 'hidden'], 'paywall'],
@@ -170,19 +214,107 @@ async function checkBackgroundStatus() {
   }
 }
 
-// Popup outcome mapping: run popup.js across every locale and check headline/detail texts.
-async function checkPopupMapping() {
-  const popupSource = read('extension/popup.js');
-  const formatMsg = (table, key, subs = []) => {
-    const entry = table[key];
-    if (!entry) return '';
-    const text = entry.message.replace(/\$([A-Z_]+)\$/g, (_, name) => entry.placeholders?.[name.toLowerCase()]?.content ?? '');
-    return text.replace(/\$(\d)/g, (_, i) => subs[i - 1] ?? '');
-  };
-  async function runPopup(locale, mode, status) {
-    const table = messages[locale];
-    const els = new Map();
-    const makeEl = (id) => ({
+// "Also hide other popups" in background.js: its real handling inserts the lists' CSS only while the
+// option is on, loads their file only when first needed, and never adds their selectors to the cookie
+// list's (content.js clicks inside what siteSelectors names).
+async function checkBackgroundOtherPopups() {
+  const OTHER = 'rules/other-popups.json';
+  const other = ruleFiles['extension/rules/other-popups.json'];
+  const genericSample = other.generic?.[0];
+  const [site, siteList] = Object.entries(other.sites ?? {}).find(([key, list]) => !key.includes('*') && list.length) ?? [];
+  if (!genericSample || !site) return; // reported above: the file has no rules of its own
+  const frame = (tabId) => ({ tab: { id: tabId }, frameId: 0 });
+  const ask = { type: 'hideOtherPopups', host: site, generic: true };
+
+  for (const stored of [{}, { hideOtherPopups: false }]) {
+    const { seen, send } = startBackground({ ...stored });
+    await send(ask, frame(1));
+    const label = JSON.stringify(stored);
+    if (seen.inserted.length) problems.push(`background (option off, ${label}): inserted other-popup CSS: ${seen.inserted[0].css.slice(0, 80)}`);
+    if (seen.fetched.includes(OTHER)) problems.push(`background (option off, ${label}): loaded ${OTHER}`);
+  }
+
+  const { seen, send } = startBackground({ hideOtherPopups: true });
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  if (seen.fetched.includes(OTHER)) problems.push(`background: loads ${OTHER} when it starts, not on the first request`);
+  await send(ask, frame(2));
+  const css = seen.inserted.filter((i) => i.tabId === 2).map((i) => i.css).join('\n');
+  if (!css.includes(genericSample) || !css.includes(siteList[0])) {
+    problems.push(`background (option on): the other-popup CSS for ${site} lacks ${JSON.stringify(genericSample)} or ${JSON.stringify(siteList[0])}`);
+  }
+  if (!/display: none !important/.test(css)) problems.push('background (option on): no hiding CSS inserted');
+  const cookieSelectors = (await send({ type: 'siteSelectors', host: site }, frame(3))) ?? [];
+  const cookieSite = new Set(ruleFiles['extension/cookie-rules.json'].sites[site] ?? []);
+  const leaked = cookieSelectors.filter((selector) => siteList.includes(selector) && !cookieSite.has(selector));
+  if (leaked.length) problems.push(`background: siteSelectors for ${site} names other-popup selectors: ${leaked.slice(0, 3).join(', ')}`);
+  await send({ type: 'hide', host: site, site: true, generic: true }, frame(4));
+  const cookieCss = seen.inserted.filter((i) => i.tabId === 4).map((i) => i.css).join('\n');
+  if (cookieCss.includes(siteList[0]) && !cookieSite.has(siteList[0])) problems.push(`background: the cookie list's CSS for ${site} carries other-popup rules`);
+}
+
+// rules.js, where the CSS is built, writes scroll fixes only in the allowed form, whatever the JSON says.
+async function checkScrollCss() {
+  const good = [['body', [['overflow', 'auto']]], ['html,body', [['overflow-y', 'visible'], ['position', 'initial']]]];
+  const bad = [
+    ['div', [['overflow', 'auto']]],
+    ['body', [['width', 'auto']]],
+    ['body', [['overflow', 'auto; color: red']]],
+    ['body', [['overflow', 'auto} div {display: none']]],
+    ['body', []],
+    'body { overflow: auto }',
+  ];
+  const ctx = vm.createContext({
+    fetch: async () => ({ json: async () => ({ generic: [], sites: {}, exceptions: {}, noGeneric: [], scroll: { 'example.org': [...bad, ...good] } }) }),
+    Object, Array, Set, JSON, Promise,
+  });
+  ctx.globalThis = ctx;
+  vm.runInContext(read('extension/rules.js'), ctx, { filename: 'extension/rules.js' });
+  const rules = ctx.HidingRules.create();
+  await rules.load('x');
+  let css;
+  try {
+    css = rules.cssFor('www.example.org', { site: true });
+  } catch (error) {
+    css = `an error: ${error.message}`;
+  }
+  const want = 'body { overflow: auto !important; }\nhtml,body { overflow-y: visible !important; position: initial !important; }';
+  if (css !== want) problems.push(`rules.js scroll fixes: got ${JSON.stringify(css)}, want ${JSON.stringify(want)}`);
+}
+
+// The popup's "Also hide other popups" switch shows what is stored, saves a change and shows the
+// reload hint, on any tab (also one whose address Safari hides).
+async function checkPopupOtherPopups() {
+  for (const tab of [{ id: 1, url: 'https://example.org/' }, { id: 1 }]) {
+    for (const stored of [true, false]) {
+      const { getEl, saved } = await runPopup('en', 'decline', null, { stored: { hideOtherPopups: stored }, tab });
+      const where = tab.url ? 'a web page' : 'a tab without an address';
+      const box = getEl('other-popups');
+      if (box.checked !== stored) problems.push(`popup (${where}): the other-popups switch shows ${box.checked}, stored ${stored}`);
+      getEl('reload-hint').hidden = true; // as popup.html has it
+      box.checked = !stored;
+      await box.fire('change');
+      if (saved.at(-1)?.hideOtherPopups !== !stored) {
+        problems.push(`popup (${where}): turning the other-popups switch to ${!stored} saved ${JSON.stringify(saved.at(-1) ?? null)}`);
+      }
+      if (getEl('reload-hint').hidden !== false) problems.push(`popup (${where}): no reload hint after the other-popups switch changed`);
+    }
+  }
+}
+
+// Run popup.js in a stand-in popup: `stored` is storage.local, `tab` the active tab.
+const formatMsg = (table, key, subs = []) => {
+  const entry = table[key];
+  if (!entry) return '';
+  const text = entry.message.replace(/\$([A-Z_]+)\$/g, (_, name) => entry.placeholders?.[name.toLowerCase()]?.content ?? '');
+  return text.replace(/\$(\d)/g, (_, i) => subs[i - 1] ?? '');
+};
+async function runPopup(locale, mode, status, { stored = {}, tab = { id: 1, url: 'https://example.org/' } } = {}) {
+  const table = messages[locale];
+  const els = new Map();
+  const saved = [];
+  const makeEl = (id) => {
+    const listeners = {};
+    return {
       id,
       textContent: '',
       hidden: false,
@@ -190,46 +322,55 @@ async function checkPopupMapping() {
       value: id === 'mode-hide' ? 'hide' : 'decline',
       dataset: {},
       classList: { add() {} },
-      addEventListener() {},
-    });
-    const getEl = (id) => {
-      if (!els.has(id)) els.set(id, makeEl(id));
-      return els.get(id);
+      addEventListener(type, fn) { (listeners[type] ??= []).push(fn); },
+      async fire(type) { for (const fn of listeners[type] ?? []) await fn(); },
     };
-    const document = {
-      documentElement: { lang: '' },
-      body: { classList: { add() {} } },
-      getElementById: getEl,
-      querySelectorAll: () => [],
-    };
-    const browser = {
-      i18n: {
-        getUILanguage: () => locale,
-        getMessage: (key, subs) => formatMsg(table, key, subs),
+  };
+  const getEl = (id) => {
+    if (!els.has(id)) els.set(id, makeEl(id));
+    return els.get(id);
+  };
+  const document = {
+    documentElement: { lang: '' },
+    body: { classList: { add() {} } },
+    getElementById: getEl,
+    querySelectorAll: () => [],
+  };
+  const browser = {
+    i18n: {
+      getUILanguage: () => locale,
+      getMessage: (key, subs) => formatMsg(table, key, subs),
+    },
+    tabs: { query: async () => [tab] },
+    storage: {
+      local: {
+        get: async (defaults) => ({ ...defaults, total: 1, disabledSites: [], mode, ...stored }),
+        set: async (items) => { saved.push(items); },
       },
-      tabs: { query: async () => [{ id: 1, url: 'https://example.org/' }] },
-      storage: { local: { get: async (defaults) => ({ ...defaults, total: 1, disabledSites: [], mode }), set: async () => {} } },
-      runtime: { sendMessage: async () => status, getManifest: () => ({ version: manifest.version }) },
-    };
-    const ctx = vm.createContext({
-      browser,
-      document,
-      navigator: { userAgent: 'Macintosh', maxTouchPoints: 0 },
-      URL,
-      URLSearchParams,
-      Intl,
-      Object,
-      String,
-      Math,
-      Set,
-      console,
-    });
-    ctx.globalThis = ctx;
-    vm.runInContext(popupSource, ctx, { filename: 'extension/popup.js' });
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    return { headline: getEl('headline').textContent, detail: getEl('detail').textContent };
-  }
+    },
+    runtime: { sendMessage: async () => status, getManifest: () => ({ version: manifest.version }) },
+  };
+  const ctx = vm.createContext({
+    browser,
+    document,
+    navigator: { userAgent: 'Macintosh', maxTouchPoints: 0 },
+    URL,
+    URLSearchParams,
+    Intl,
+    Object,
+    String,
+    Math,
+    Set,
+    console,
+  });
+  ctx.globalThis = ctx;
+  vm.runInContext(read('extension/popup.js'), ctx, { filename: 'extension/popup.js' });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  return { headline: getEl('headline').textContent, detail: getEl('detail').textContent, getEl, saved };
+}
 
+// Popup outcome mapping: run popup.js across every locale and check headline/detail texts.
+async function checkPopupMapping() {
   for (const locale of locales) {
     const table = messages[locale];
     const checks = [
@@ -252,10 +393,13 @@ async function checkPopupMapping() {
 }
 
 await checkBackgroundStatus();
+await checkBackgroundOtherPopups();
+await checkScrollCss();
 await checkPopupMapping();
+await checkPopupOtherPopups();
 
 if (problems.length) {
   console.log(problems.map((p) => `PROBLEM  ${p}`).join('\n'));
   process.exit(1);
 }
-console.log(`extension checks passed (${locales.length} locales, ${used.size} message keys in use, ${allSelectors.length} safe selectors, tab status + popup outcomes ok, version ${manifest.version})`);
+console.log(`extension checks passed (${locales.length} locales, ${used.size} message keys in use, ${allSelectors.length} safe selectors, tab status, other popups + popup outcomes ok, version ${manifest.version})`);

@@ -1,6 +1,7 @@
 name: Refresh the cookie list
 
-# Once a week, convert the latest EasyList Cookie List and open a pull request if anything changed.
+# Once a week, convert the latest EasyList Cookie List and the two lists behind "Also hide other popups"
+# (Fanboy's Newsletter and Notifications lists), and open one pull request if anything changed.
 # Needs Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests".
 on:
   schedule:
@@ -20,24 +21,34 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
-      - name: Download the list
-        run: curl --fail --silent --show-error -o "$RUNNER_TEMP/fanboy-cookiemonster.txt" https://secure.fanboy.co.nz/fanboy-cookiemonster.txt
-      - name: Convert it
-        run: python3 -I tools/build_cookie_rules.py "$RUNNER_TEMP/fanboy-cookiemonster.txt"
+      - name: Download the lists
+        run: |
+          for list in fanboy-cookiemonster fanboy-newsletter fanboy-notifications; do
+            curl --fail --silent --show-error -o "$RUNNER_TEMP/$list.txt" "https://secure.fanboy.co.nz/$list.txt"
+          done
+      - name: Convert them
+        run: |
+          python3 -I tools/build_cookie_rules.py "$RUNNER_TEMP/fanboy-cookiemonster.txt" \
+            --other-popups "$RUNNER_TEMP/fanboy-newsletter.txt" "$RUNNER_TEMP/fanboy-notifications.txt"
       - name: Check the result
         run: |
           python3 -m json.tool extension/cookie-rules.json > /dev/null
           python3 -m json.tool extension/rules/cookie-scripts.json > /dev/null
+          python3 -m json.tool extension/rules/other-popups.json > /dev/null
           node tests/check_extension.mjs
       - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         id: pull-request
         with:
           branch: cookie-list-update
-          commit-message: Update the EasyList Cookie List
-          title: Update the EasyList Cookie List
+          commit-message: Update the EasyList lists
+          title: Update the EasyList lists
           body: |
-            The weekly refresh of `extension/cookie-rules.json` and `extension/rules/cookie-scripts.json`
-            from EasyList's Cookie List. Check the mock pages before merging.
+            The weekly refresh from three EasyList lists:
+            - the Cookie List (`fanboy-cookiemonster.txt`): `extension/cookie-rules.json` and
+              `extension/rules/cookie-scripts.json`
+            - Fanboy's Newsletter List (`fanboy-newsletter.txt`) and Fanboy's Notifications List
+              (`fanboy-notifications.txt`): `extension/rules/other-popups.json` ("Also hide other popups")
+            Check the mock pages before merging.
           labels: cookie list
       # A pull request opened with this workflow's token doesn't start other workflows, so start them here.
       - name: Start the checks on the pull request

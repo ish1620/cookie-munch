@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Other popups on, Decline mode: a sign-up box that mentions cookies</title>
+<meta name="expect" content="reject">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="rejected">
+<meta name="hide-other-popups" content="yes">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Other popups on, Decline mode: a sign-up box that mentions cookies</h1>
+<p data-keep>Expect: the cookie banner is declined ("Reject all"); the sign-up box, which talks about
+cookies and has a "No thanks" button, is hidden by the lists and "No thanks" is never clicked.</p>
+<div class="newsletter-popup-container fixed" style="bottom: 220px" data-banner>
+  <p>Join our newsletter! We use cookies to remember that you signed up, so we don't ask again.</p>
+  <input type="email" placeholder="Email"> <button data-test="subscribe" data-close>Subscribe</button>
+  <button data-test="no-thanks" data-close>No thanks</button>
+</div>
+<script>
+  // The cookie banner comes a moment later, as consent scripts do: the box is on the page first.
+  setTimeout(() => {
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="fixed" data-banner>
+        <p>We use cookies to improve your experience and for ads.</p>
+        <button data-test="accept" data-close>Accept all</button>
+        <button data-test="reject" data-close>Reject all</button>
+      </div>`);
+  }, 2500);
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 /*
  * Cookie Munch: background script.
- * - Adds the hiding CSS from EasyList's Cookie List to pages that ask for it.
+ * - Adds the hiding CSS from EasyList's Cookie List to pages that ask for it, and, with
+ *   "Also hide other popups" on, the CSS from the Newsletter and Notifications lists.
  * - Turns the list's script-blocking rules on in Hide-only mode, off in Decline mode.
  * - Puts a ✓ on the toolbar button for tabs where a banner was handled,
  *   remembers what happened there (for the popup), and keeps a running total.
@@ -15,9 +16,7 @@ const rulesReady = CookieRules.load(api.runtime.getURL('cookie-rules.json'));
 // ---------------------------------------------------------------------------
 // Hiding
 // ---------------------------------------------------------------------------
-async function hide(sender, { host, site, generic }) {
-  await rulesReady;
-  const css = CookieRules.cssFor(host, { site, generic });
+async function insert(sender, css) {
   if (!css) return {};
   try {
     await api.scripting.insertCSS({ target: { tabId: sender.tab.id, frameIds: [sender.frameId ?? 0] }, css });
@@ -25,6 +24,31 @@ async function hide(sender, { host, site, generic }) {
   } catch {
     return { css }; // the page will add it itself
   }
+}
+
+async function hide(sender, { host, site, generic }) {
+  await rulesReady;
+  return insert(sender, CookieRules.cssFor(host, { site, generic }));
+}
+
+// "Also hide other popups": its own rule set, loaded on the first request that needs it (not on
+// every wake of this script), and only while the option is on. Hiding only: nothing here reaches
+// siteSelectors, which content.js uses to find banners it may click in.
+const otherPopups = HidingRules.create();
+let otherPopupsReady = null;
+function loadOtherPopups() {
+  otherPopupsReady ??= otherPopups.load(api.runtime.getURL('rules/other-popups.json')).catch((error) => {
+    otherPopupsReady = null; // try again on the next request
+    throw error;
+  });
+  return otherPopupsReady;
+}
+
+async function hideOtherPopups(sender, { host, generic }) {
+  const { hideOtherPopups: on } = await api.storage.local.get({ hideOtherPopups: false });
+  if (on !== true) return {};
+  await loadOtherPopups();
+  return insert(sender, otherPopups.cssFor(host, { site: true, generic }));
 }
 
 // ---------------------------------------------------------------------------
@@ -131,6 +155,9 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'hide':
       if (sender.tab?.id == null || typeof message.host !== 'string') return false;
       return reply(hide(sender, { host: message.host, site: message.site === true, generic: message.generic === true }));
+    case 'hideOtherPopups':
+      if (sender.tab?.id == null || typeof message.host !== 'string') return false;
+      return reply(hideOtherPopups(sender, { host: message.host, generic: message.generic === true }));
     case 'siteSelectors':
       return typeof message.host === 'string'
         ? reply(rulesReady.then(() => CookieRules.siteSelectors(message.host)))

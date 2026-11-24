@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Other popups on: scroll fix for a site the lists name</title>
+<meta name="expect" content="">
+<meta name="expect-report" content="">
+<meta name="hide-other-popups" content="yes">
+<meta name="other-popups-host" content="npr.org">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Other popups on: scroll fix for a site the lists name</h1>
+<p data-keep>Expect: no clicks, and the page scrolls again: the lists have a scroll fix for this site (npr.org's, which sets body's overflow back to auto).</p>
+<div style="height:3000px">Tall page content…</div>
+<script>
+  // A sign-up box froze scrolling (no cookie or consent mark, so the cookie code leaves it alone).
+  document.body.style.overflow = 'hidden';
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

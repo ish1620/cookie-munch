@@ -21,6 +21,10 @@
 //   mode                 "hide" for Hide-only mode (default: decline)
 //   disabled-sites       sites switched off in the popup
 //   site-rules           extra list selectors for this test site, comma-separated
+//   hide-other-popups    "yes" or "no": the "Also hide other popups" setting (left out: content.js's default)
+//   other-popups-host    the host whose rules the stand-in background uses for "Also hide other popups"
+//                        (so a page can be one of the lists' named sites)
+//   expect-scroll-locked "yes": the page must still be unable to scroll at the end
 // Elements marked data-keep must still be visible at the end.
 //
 // Banner behavior, as attributes on the mock's buttons:
@@ -80,6 +84,15 @@ const rulesReady = new Promise((resolve) => {
   document.head.append(script);
 });
 
+// The "Also hide other popups" rules: their own instance, as in the background script, loaded on
+// first use. The stand-in never checks the setting itself: whether to ask is content.js's call.
+let otherPopupsReady = null;
+const loadOtherPopups = () => (otherPopupsReady ??= rulesReady.then(async () => {
+  const rules = HidingRules.create();
+  await rules.load('../../extension/rules/other-popups.json');
+  return rules;
+}));
+
 // Record every frame's messages on the top window so they survive a frame being removed or navigated away.
 const record = (() => {
   try {
@@ -101,6 +114,10 @@ async function fakeBackground(message) {
     await rulesReady;
     return { css: CookieRules.cssFor(message.host, message) }; // content.js adds it as a <style>
   }
+  if (message.type === 'hideOtherPopups') {
+    const rules = await loadOtherPopups();
+    return { css: rules.cssFor(meta('other-popups-host') ?? message.host, { site: true, generic: message.generic }) };
+  }
   return undefined;
 }
 
@@ -111,6 +128,7 @@ window.browser = {
         ...defaults,
         ...store.read(),
         disabledSites: meta('disabled-sites')?.split(',') ?? [],
+        ...(meta('hide-other-popups') === undefined ? {} : { hideOtherPopups: meta('hide-other-popups') === 'yes' }),
         mode: meta('mode') ?? new URLSearchParams(location.search).get('mode') ?? 'decline',
       }),
       set: async (items) => {
@@ -194,6 +212,7 @@ window.__result = () => {
   const scrollLocked = [document.documentElement, document.body]
     .some((el) => getComputedStyle(el).overflow.includes('hidden')) || getComputedStyle(document.body).position === 'fixed';
   const expectHidden = meta('expect-hidden') === 'yes';
+  const expectScrollLocked = meta('expect-scroll-locked') === 'yes';
   const messages = record.__messages;
   const report = messages.filter((m) => m.type === 'declined').map((m) => m.how).join(',');
   const expectReport = meta('expect-report');
@@ -206,7 +225,7 @@ window.__result = () => {
   return {
     page: location.pathname.split('/').pop(),
     pass: clicks === expect && loads === expectLoads && (!expectHidden || bannersLeft === 0) &&
-      notKept === 0 && !scrollLocked && (expectReport === undefined || report === expectReport) && lastDeclineOk,
+      notKept === 0 && scrollLocked === expectScrollLocked && (expectReport === undefined || report === expectReport) && lastDeclineOk,
     expect,
     clicks,
     loads,

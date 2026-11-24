@@ -41,6 +41,8 @@
   "modeHide": { "message": "Solo ocultar" },
   "helpDecline": { "message": "Pulsa «Rechazar» en los avisos de cookies. Oculta los que no se pueden rechazar." },
   "helpHide": { "message": "Como Brave: oculta los avisos y bloquea sus scripts. Nunca los responde." },
+  "otherPopupsLabel": { "message": "Ocultar también otros avisos" },
+  "otherPopupsHelp": { "message": "Oculta los cuadros de suscripción a boletines, los avisos para descargar la app y los avisos propios del sitio sobre notificaciones. Nunca pulsa en ellos." },
   "reloadHint": { "message": "Recarga la página para aplicarlo." },
   "report": { "message": "¿Se ha colado algún aviso? Avísanos" },
   "reportHint": { "message": "Abre una incidencia en GitHub con el nombre de este sitio y tu configuración (modo, versión, Mac o iPhone). No se envía nada si no la publicas." }

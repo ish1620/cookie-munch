@@ -35,6 +35,14 @@ Pick a mode in the toolbar popup.
 [EasyList's Cookie List](https://easylist.to) (about 34,000 rules, bundled) and blocks many banner
 scripts before they load.
 
+**Also hide other popups** (off by default, in either mode) also hides newsletter sign-up boxes, app
+download banners and sites' own "allow notifications?" boxes, using EasyList's Fanboy Newsletter and
+Fanboy Notifications lists (bundled). It only hides them and never clicks inside them. The lists also
+hide sign-up boxes inside a page, such as one in the middle of an article, and on sites they name they
+let a page scroll again where such a box froze it. Safari's own app banner and its notification
+permission sheet are Safari's, not the page's, and stay. Switching it on or off applies from the next
+page load.
+
 The popup tells you what happened on the current page, counts the banners it has handled, and lets
 you switch it off for one site. A ✓ on the toolbar button means it handled something on that page.
 The popup speaks English, Japanese and Spanish.
