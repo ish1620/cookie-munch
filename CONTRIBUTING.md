@@ -239,7 +239,9 @@ python3 -I tools/icons_from_image.py art/cookie-munch.png --preview /tmp/icons  
 
 1. `tools/bump_version.sh 1.4.0` sets the version in the manifest and the Xcode project.
 2. Add the changes to `CHANGELOG.md`.
-3. `tools/package_extension.sh` checks everything and writes `dist/cookie-munch-extension.zip` for people who
+3. Check it on real sites: `npm run test:live`, then a few more sites by hand in Safari with the built
+   extension, among them banners that can only be accepted.
+4. `tools/package_extension.sh` checks everything and writes `dist/cookie-munch-extension.zip` for people who
    load it as a temporary extension.
 
 ## Style
