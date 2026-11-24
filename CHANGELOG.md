@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Settings panels now read Sourcepoint's class-only switches, BigID's switches (whose `aria-checked` stays
+  `false`), and on/off radio pairs (native radio inputs or ARIA radiogroups). A panel that still holds an
+  unlocked control Cookie Munch cannot read (`aria-pressed` or `aria-checked` outside recognised switches,
+  or radios outside an on/off pair, checked again right before Save) is no longer saved: it is hidden and
+  reported as hidden instead. Locked controls (including through a disabled `fieldset`) never block a save
+  and are never clicked.
 - When a decline loads a new page on the same site with the banner on it again, Cookie Munch no longer
   declines again there: for 10 seconds after a decline, a page of the same site only hides its banner, and
   so do its frames. Confirmed on test pages in WebKit; not yet verified in Safari itself.

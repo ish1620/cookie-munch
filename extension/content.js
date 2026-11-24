@@ -11,8 +11,8 @@
  *   3. If the banner only offers "Accept" and "Settings": open the settings,
  *      switch every optional category off, open the "Legitimate interest" view
  *      if there is one and object to everything in it, and save. If the settings
- *      have no switch it can turn off and no such view, it saves nothing and
- *      leaves the banner to step 4.
+ *      have an unreadable switch, or no switch it can turn off and no such view,
+ *      it saves nothing and leaves the banner to step 4.
  *   A few seconds in, whatever couldn't be declined is hidden (step 4).
  *
  * Hide only (like Brave): never answer the banner, just hide it, using
@@ -234,6 +234,31 @@
   const TOGGLE_BUTTONS = 'button[aria-pressed], [role="button"][aria-pressed]'; // pressed = on
   const SWITCHES = `${TOGGLES}, ${TOGGLE_BUTTONS}`;
 
+  // Known platforms' switches whose state sits in a class (from DuckDuckGo autoconsent's rules:
+  // lib/cmps/sourcepoint-frame.ts, rules/autoconsent/bigid.json).
+  const KNOWN_SWITCHES = [
+    {
+      name: 'Sourcepoint',
+      selector: '.sp-switch-arrow-block a.switch-bg',
+      isOn: (el) => el.classList.contains('on'),
+    },
+    {
+      name: 'Sourcepoint (two-button)',
+      selector: '.sp-switch-arrow-block a.neutral:has(.right)',
+      isOn: (el) => el.classList.contains('on'),
+      offTarget: (el) => el.querySelector('.right'),
+    },
+    {
+      name: 'BigID',
+      selector: 'button[role="switch"]:has(> span[class*="translate-x-[1.1rem]"])',
+      matches: (el) => hasAncestorId(el, 'bigidcmp-banner-widget'),
+      isOn: () => true,
+    },
+  ];
+  const KNOWN_SWITCH_SELECTOR = KNOWN_SWITCHES.map((rule) => rule.selector).join(', ');
+  const ALL_SWITCHES = `${SWITCHES}, ${KNOWN_SWITCH_SELECTOR}`;
+  const UNREADABLE_CANDIDATES = '[aria-pressed], [aria-checked], input[type="radio"], [role="radio"]';
+
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
@@ -268,10 +293,43 @@
     return aria ? kindOfLabel(normalize(aria)) : null;
   }
 
+  // Visible label text of a radio control: its <label> elements and any aria-labelledby targets.
+  function radioShownLabel(el) {
+    if (!el.matches?.('input[type="radio"], [role="radio"]')) return '';
+    const parts = [];
+    if (el instanceof HTMLInputElement && el.labels) {
+      for (const label of el.labels) parts.push(label.innerText ?? label.textContent ?? '');
+    }
+    const labelledBy = el.getAttribute('aria-labelledby');
+    if (labelledBy) {
+      const root = el.getRootNode();
+      for (const id of labelledBy.trim().split(/\s+/)) {
+        const target = root.getElementById?.(id);
+        if (target) parts.push(target.innerText ?? target.textContent ?? '');
+      }
+    }
+    return parts.join(' ');
+  }
+
+  // Button kind of a radio's own label text (<label> elements and aria-labelledby targets),
+  // using the same label rules as kindOf().
+  function radioLabelKind(el) {
+    const label = radioShownLabel(el);
+    if (!label) return null;
+    if (label.length <= MAX_PAY_LABEL && isPayText(label)) return 'pay';
+    if (label.length > 150) return null;
+    return kindOfLabel(normalize(label));
+  }
+
   // True when the control shows a pay label right now. Unlike kindOf() it always reads what
   // shows, whatever its length, since markup can run a pay word into its neighbour ("AND" and
-  // "PAY" on two lines): for the few places where that is worth a layout read.
-  const showsPay = (el) => isPayText(shownText(el));
+  // "PAY" on two lines): for the few places where that is worth a layout read. For a radio, its
+  // label text counts too.
+  function showsPay(el) {
+    if (isPayText(shownText(el))) return true;
+    const label = radioShownLabel(el);
+    return label !== '' && isPayText(label);
+  }
 
   // Every click this script makes goes through here, for a last look at the button itself: no
   // click when it shows a pay label right now (a label can change after the button was chosen).
@@ -289,9 +347,17 @@
     return root instanceof ShadowRoot ? root.host : null;
   }
 
-  // The document plus every open shadow root in it.
+  // True when el has an ancestor with the given id, stepping out of shadow roots.
+  function hasAncestorId(el, id) {
+    for (let node = parentOf(el); node; node = parentOf(node)) {
+      if (node.id === id) return true;
+    }
+    return false;
+  }
+
+  // The document (or a banner) plus every open shadow root in it, including its own.
   function allRoots(start = document) {
-    const roots = [start];
+    const roots = start.shadowRoot ? [start, start.shadowRoot] : [start];
     for (let i = 0; i < roots.length && roots.length < 300; i++) {
       for (const el of roots[i].querySelectorAll('*')) {
         if (el.shadowRoot) roots.push(el.shadowRoot);
@@ -379,48 +445,231 @@
     return wholePageIsConsent() ? document.body : null;
   }
 
-  // The banner's category switches: checkboxes, switches, and toggle buttons. A toggle button
-  // labelled like one of the banner's own buttons (any kind in KINDS: Reject, Object all,
-  // Legitimate interest, Save, Settings, a navigation button such as "Partners", Accept) is not a
-  // switch, and neither is any control labelled as a navigation button or a pay button. A switch
-  // that holds other switches is one switch, the outer one: what is inside it is a part of it.
+  // The banner's category switches: checkboxes, switches, toggle buttons, known class-only
+  // switches, and on/off radio pairs. A toggle button or known class-only switch labelled like
+  // one of the banner's own buttons (any kind in KINDS) is not a switch, and neither is any
+  // control labelled as a navigation, accept or pay button. A switch that holds other switches
+  // is one switch, the outer one: what is inside it is a part of it.
+  const knownSwitchRule = (el) =>
+    KNOWN_SWITCHES.find((rule) => el.matches(rule.selector) && (!rule.matches || rule.matches(el))) ?? null;
+  const matchesAnySwitch = (el) => el.matches(SWITCHES) || knownSwitchRule(el) !== null;
+  const radioPairByOff = new WeakMap(); // off radio -> { on, off, group, native }
+
+  function radioValue(el, native) {
+    if (native) return (el.getAttribute('value') ?? '').trim().toLowerCase();
+    if (el.hasAttribute('value')) return (el.getAttribute('value') ?? '').trim().toLowerCase();
+    if (el.hasAttribute('data-value')) return (el.getAttribute('data-value') ?? '').trim().toLowerCase();
+    return normalize(rawText(el));
+  }
+
+  const isRadioChecked = (el, native) =>
+    (native ? el.checked : el.getAttribute('aria-checked') === 'true');
+
+  function isSafeRadioPair({ on, off }) {
+    if (!on.isConnected || !off.isConnected) return false;
+    if (showsPay(on) || showsPay(off)) return false;
+    if (kindOf(on) || kindOf(off)) return false;
+    if (radioLabelKind(on) || radioLabelKind(off)) return false;
+    if (leavesPage(off)) return false;
+    return true;
+  }
+
+  function makeRadioPair(radios, group, native) {
+    if (radios.length !== 2) return null;
+    const [a, b] = radios;
+    const va = radioValue(a, native);
+    const vb = radioValue(b, native);
+    let on;
+    let off;
+    if (va === 'on' && vb === 'off') { on = a; off = b; }
+    else if (va === 'off' && vb === 'on') { on = b; off = a; }
+    else return null;
+    if (isPart(on) || isPart(off)) return null;
+    const onChecked = isRadioChecked(on, native);
+    const offChecked = isRadioChecked(off, native);
+    if (onChecked === offChecked) return null; // neither checked (or both): unreadable
+    const pair = { on, off, group, native };
+    return isSafeRadioPair(pair) ? pair : null;
+  }
+
+  function findRadioPairs(banner) {
+    const pairs = [];
+    for (const root of allRoots(banner)) {
+      // Native radio inputs grouped by (form, name) within one tree root.
+      const byForm = new Map();
+      for (const input of root.querySelectorAll('input[type="radio"]')) {
+        if (!input.name) continue;
+        let byName = byForm.get(input.form);
+        if (!byName) { byName = new Map(); byForm.set(input.form, byName); }
+        let list = byName.get(input.name);
+        if (!list) { list = []; byName.set(input.name, list); }
+        list.push(input);
+      }
+      for (const byName of byForm.values()) {
+        for (const list of byName.values()) {
+          const pair = makeRadioPair(list, list[0].closest('[role="radiogroup"]'), true);
+          if (pair) pairs.push(pair);
+        }
+      }
+      // ARIA role="radio" grouped by their enclosing role="radiogroup".
+      for (const group of root.querySelectorAll('[role="radiogroup"]')) {
+        const list = [...group.querySelectorAll('[role="radio"]')]
+          .filter((el) => !(el instanceof HTMLInputElement && el.type === 'radio') && el.closest('[role="radiogroup"]') === group);
+        const pair = makeRadioPair(list, group, false);
+        if (pair) pairs.push(pair);
+      }
+    }
+    for (const pair of pairs) radioPairByOff.set(pair.off, pair);
+    return pairs;
+  }
+
   function isSwitch(box) {
+    const pair = radioPairByOff.get(box);
+    if (pair) return isSafeRadioPair(pair);
     const kind = kindOf(box);
     if (kind === 'pay' || showsPay(box)) return false;
+    const known = knownSwitchRule(box);
+    if (known) {
+      if (kind || leavesPage(box)) return false;
+      const target = known.offTarget?.(box);
+      if (target && (kindOf(target) || showsPay(target) || leavesPage(target))) return false;
+      return true;
+    }
     return box.matches(TOGGLE_BUTTONS) ? !kind : kind !== 'nav';
   }
 
   function switchesIn(banner) {
-    return allRoots(banner)
-      .flatMap((root) => [...root.querySelectorAll(SWITCHES)])
-      .filter((box) => !isPart(box) && isSwitch(box));
+    const seen = new Set();
+    const list = [];
+    for (const root of allRoots(banner)) {
+      for (const box of root.querySelectorAll(ALL_SWITCHES)) {
+        if (seen.has(box) || isPart(box) || !isSwitch(box)) continue;
+        if (!box.matches(SWITCHES) && !knownSwitchRule(box)) continue;
+        seen.add(box);
+        list.push(box);
+      }
+    }
+    for (const pair of findRadioPairs(banner)) {
+      if (seen.has(pair.off)) continue;
+      seen.add(pair.off);
+      list.push(pair.off);
+    }
+    return list;
   }
 
   // True for a switch inside another switch, also through a shadow root (Ionic's ion-toggle
   // keeps a checkbox in its own).
   function isPart(box) {
     for (let node = parentOf(box); node; node = parentOf(node)) {
-      if (node.matches(SWITCHES)) return true;
+      if (matchesAnySwitch(node)) return true;
     }
     return false;
   }
 
-  // What to click to turn a switch off: the switch itself, unless it holds other switches.
-  // Drawn as an "Off" and an "On" half (Sourcepoint's pm-toggle), only a click on a half does
-  // anything: there it is the half with the class "off". Around a single one, usually the real
-  // checkbox (Element UI's el-switch), it is that one: its click reaches the outer switch too.
+  // What to click to turn a switch off: the switch itself, unless a known rule names an off
+  // target or it holds other switches. Drawn as an "Off" and an "On" half (Sourcepoint's
+  // pm-toggle), only a click on a half does anything: there it is the half with the class "off".
+  // Around a single one, usually the real checkbox (Element UI's el-switch), it is that one: its
+  // click reaches the outer switch too.
   function offPartOf(box) {
+    const known = knownSwitchRule(box);
+    if (known?.offTarget) return known.offTarget(box) ?? box;
     const parts = [...box.querySelectorAll(SWITCHES)];
     return parts.find((part) => part.classList.contains('off')) ?? (parts.length === 1 ? parts[0] : box);
   }
 
   function isOn(box) {
+    const pair = radioPairByOff.get(box);
+    if (pair) {
+      return pair.on.isConnected && pair.off.isConnected &&
+        isRadioChecked(pair.on, pair.native) && !isRadioChecked(pair.off, pair.native);
+    }
+    const known = knownSwitchRule(box);
+    if (known) return known.isOn(box);
     if (box instanceof HTMLInputElement) return box.checked;
     return box.getAttribute(box.matches(TOGGLES) ? 'aria-checked' : 'aria-pressed') === 'true';
   }
 
-  const isLocked = (box) =>
-    box.disabled || box.getAttribute('aria-disabled') === 'true' || box.hasAttribute('readonly');
+  // True when el sits inside a disabled <fieldset> (outside its first <legend>, which HTML keeps enabled).
+  function inDisabledFieldset(el) {
+    for (let fs = el.closest?.('fieldset:disabled'); fs; fs = fs.parentElement?.closest?.('fieldset:disabled')) {
+      const legend = fs.querySelector(':scope > legend');
+      if (!legend || !legend.contains(el)) return true;
+    }
+    return false;
+  }
+
+  function isLockedEl(el) {
+    return Boolean(
+      el.disabled ||
+      el.hasAttribute('disabled') ||
+      el.matches(':disabled') ||
+      el.getAttribute('aria-disabled') === 'true' ||
+      el.hasAttribute('readonly') ||
+      inDisabledFieldset(el),
+    );
+  }
+
+  function isLocked(box) {
+    const pair = radioPairByOff.get(box);
+    if (pair) {
+      return isLockedEl(pair.off) || isLockedEl(pair.on) || (pair.group ? isLockedEl(pair.group) : false);
+    }
+    const known = knownSwitchRule(box);
+    if (known?.offTarget) {
+      const target = known.offTarget(box);
+      if (target && isLockedEl(target)) return true;
+    }
+    return isLockedEl(box);
+  }
+
+  // True when the banner holds an unlocked control that looks like a switch or radio
+  // (aria-pressed, aria-checked, a radio, or a known-platform switch that cannot be used) and
+  // isn't read by SWITCHES, KNOWN_SWITCHES or findRadioPairs — skipping parts of readable
+  // switches, elements that wrap one, tabs, and (for non-radio ARIA controls) controls with a
+  // button label. Such a panel is not saved: it is left to be hidden.
+  function hasUnreadable(banner) {
+    const read = new Set(switchesIn(banner));
+    for (const pair of findRadioPairs(banner)) {
+      read.add(pair.on);
+      read.add(pair.off);
+    }
+    const wrapsReadable = new Set();
+    for (const sw of read) {
+      for (let node = parentOf(sw); node; node = parentOf(node)) {
+        wrapsReadable.add(node);
+        if (node === banner) break;
+      }
+    }
+    const insideReadable = (el) => {
+      for (let node = parentOf(el); node; node = parentOf(node)) {
+        if (read.has(node)) return true;
+        if (node === banner) break;
+      }
+      return false;
+    };
+    for (const root of allRoots(banner)) {
+      for (const el of root.querySelectorAll(UNREADABLE_CANDIDATES)) {
+        if (read.has(el) || wrapsReadable.has(el) || insideReadable(el)) continue;
+        if (el.getAttribute('role') === 'tab') continue;
+        if (isLockedEl(el)) continue;
+        if (el.matches('input[type="radio"], [role="radio"]')) {
+          const group = el.closest('[role="radiogroup"]');
+          if (group && isLockedEl(group)) continue;
+          return true; // any unlocked radio outside a readable pair blocks Save, whatever its label
+        }
+        if (kindOf(el) !== null || showsPay(el)) continue;
+        return true;
+      }
+      for (const el of root.querySelectorAll(KNOWN_SWITCH_SELECTOR)) {
+        if (!knownSwitchRule(el)) continue;
+        if (read.has(el) || wrapsReadable.has(el) || insideReadable(el)) continue;
+        if (isLocked(el)) continue;
+        return true; // a known-platform switch that can't be used (navigates or reads as a button) blocks Save
+      }
+    }
+    return false;
+  }
 
   const hasToggles = (banner) => switchesIn(banner).length > 0;
   const canSwitchOff = (banner) => switchesIn(banner).some((box) => !isLocked(box));
@@ -631,8 +880,20 @@
     let switched = await switchOff(banner);
     const opener = legitDone ? null : legitOpenerIn(banner);
     if (!opener) {
+      if (hasUnreadable(banner)) {
+        log('unreadable switch in settings, leaving the banner to be hidden');
+        gaveUp = true;
+        stage = previous;
+        return;
+      }
       log(`switched off ${switched} optional categories`);
       await pause(300);
+      if (hasUnreadable(banner)) {
+        log('unreadable switch in settings, leaving the banner to be hidden');
+        gaveUp = true;
+        stage = previous;
+        return;
+      }
       return finish(save.el, null, how, previous);
     }
     legitDone = true;
@@ -644,6 +905,12 @@
     }
     log('opened the legitimate interest view');
     await pause(LEGIT_VIEW_MS);
+    if (hasUnreadable(banner)) {
+      log('unreadable switch in the legitimate interest view, leaving the banner to be hidden');
+      gaveUp = true;
+      stage = previous;
+      return;
+    }
     const objections = controlsIn(banner, 'object'); // found once: a redrawn button isn't clicked again
     for (const button of objections) {
       tried.add(button);
@@ -656,6 +923,12 @@
     switched += await switchOff(banner);
     log(`switched off ${switched} optional categories`);
     await pause(300);
+    if (hasUnreadable(banner)) {
+      log('unreadable switch in settings, leaving the banner to be hidden');
+      gaveUp = true;
+      stage = previous;
+      return;
+    }
     // The view may have redrawn the panel, so click the Save button that is there now.
     const [saveNow] = controlsIn(banner, 'save');
     if (saveNow) return finish(saveNow, null, how, previous);
@@ -899,7 +1172,7 @@
 
     if (stage === 'looking' && now - bannerSeenAt >= SETTINGS_AFTER_MS) {
       // Some banners show the category switches right away, next to a "Save" button.
-      const save = found.save.find((item) => hasToggles(item.banner));
+      const save = found.save.find((item) => hasToggles(item.banner) && !hasUnreadable(item.banner));
       if (save) return saveSettings(save);
       const settings = found.settings[0];
       if (settings) {
@@ -914,11 +1187,11 @@
       }
     }
 
-    // Save only if the settings have a switch it can turn off or a "Legitimate interest" view
-    // not opened yet to object in; saving without either would keep the site's defaults.
-    // Otherwise the banner stays in this stage and the hide step hides it.
+    // Save only if the settings have no unreadable switch and have a switch it can turn off or a
+    // "Legitimate interest" view not opened yet to object in; saving without either would keep
+    // the site's defaults. Otherwise the banner stays in this stage and the hide step hides it.
     if (stage === 'settings' && now - settingsOpenedAt >= 1000) {
-      const save = found.save.find((item) => canSwitchOff(item.banner) || (!legitDone && legitOpenerIn(item.banner)));
+      const save = found.save.find((item) => !hasUnreadable(item.banner) && (canSwitchOff(item.banner) || (!legitDone && legitOpenerIn(item.banner))));
       if (save) return saveSettings(save);
     }
   }

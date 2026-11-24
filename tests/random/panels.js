@@ -10,8 +10,9 @@
 // Each shape names where its markup comes from. "autoconsent" is DuckDuckGo autoconsent's rule files
 // (rules/autoconsent/<name>.json, lib/cmps/<name>.ts), "Consent-O-Matic" its rules/<name>.json; libraries
 // are named by their switch component's source. A shape marked guess has no source: it is a variation
-// that seemed likely. A shape marked unreadable says nothing a generic reader can go by (no checkbox,
-// no role, no aria state): Cookie Munch is expected to leave those on, and they are counted apart.
+// that seemed likely. A shape marked unreadable is a control Cookie Munch cannot read and must not
+// save (a panel holding one passes when left unsaved and fails when saved); a shape marked outOfReach
+// is a class-only switch of an unknown platform with no ARIA state (left out of reach and counted apart).
 (() => {
   'use strict';
 
@@ -62,14 +63,19 @@
     // Guesses: a label or div with role=switch around a checkbox, where only the checkbox listens.
     'label-switch': [3, { plain: ['sync', 'micro'] }, ['attr'], { guess: true }],
     'div-switch-input': [3, { plain: ['sync', 'micro'] }, ['attr'], { guess: true }],
-    // Unreadable: a class is the only state (autoconsent sourcepoint-frame "a.switch-bg.on", mega-io).
-    'class-only': [3, { div: ['sync'], link: ['sync'] }, [], { unreadable: true }],
-    // Unreadable: an on and an off radio (autoconsent cc-banner-springer, ct-ultimate-gdpr).
-    'radio-pair': [2, { plain: ['native'] }, [], { unreadable: true }],
+    // Sourcepoint's class-only switches (autoconsent sourcepoint-frame: ".sp-switch-arrow-block a.switch-bg.on",
+    // "a.neutral.on .right").
+    'sourcepoint-class': [2, { 'switch-bg': ['sync'], neutral: ['sync'] }, ['aria']],
+    // Out of reach: an unknown platform's class-only switch with no ARIA state.
+    'class-only': [1, { div: ['sync'] }, [], { outOfReach: true }],
+    // An on/off radio pair (autoconsent cc-banner-springer: input[type=radio][value=off]; ARIA radiogroup).
+    'radio-pair': [2, { plain: ['native'], 'aria-group': ['sync'] }, ['attr']],
+    // Unreadable: radios outside an on/off pair (three options, or numeric levels like ct-ultimate-gdpr).
+    'radio-group': [1, { three: ['native'], levels: ['native'] }, [], { unreadable: true }],
     // Unreadable: [aria-pressed] on something that is not a button (autoconsent web-rewind.com; tag guessed).
     'pressed-div': [2, { plain: ['sync'] }, [], { unreadable: true, guess: true }],
-    // Unreadable: aria-checked stays "false" whatever the state (autoconsent bigid).
-    'aria-stuck': [1, { plain: ['sync'] }, [], { unreadable: true }],
+    // BigID: aria-checked stays "false", state sits in the knob's Tailwind class inside #bigidcmp-banner-widget (autoconsent bigid).
+    'aria-stuck': [1, { bigid: ['sync'], 'bigid-shadow': ['sync'] }, ['attr']],
   };
 
   // A small seeded generator (mulberry32).
@@ -333,8 +339,28 @@
       draw();
     }
 
+    if (shape === 'sourcepoint-class') {
+      if (variant === 'switch-bg') {
+        const link = el(doc, 'a', { class: 'switch-bg', href: '#', 'aria-disabled': lock === 'aria' ? 'true' : null }, 'o');
+        link.addEventListener('click', (event) => { event.preventDefault(); if (!locked) flip(!on); });
+        node = el(doc, 'div', { class: 'sp-switch-arrow-block' }, `${name} `, link);
+        draw = () => link.classList.toggle('on', on);
+        draw();
+      } else {
+        const left = el(doc, 'span', { class: 'left' }, 'On');
+        const right = el(doc, 'span', { class: 'right' }, 'Off');
+        const link = el(doc, 'a', { class: 'neutral', href: '#', 'aria-disabled': lock === 'aria' ? 'true' : null }, left, right);
+        left.addEventListener('click', (event) => { event.preventDefault(); if (!locked) flip(true); });
+        right.addEventListener('click', (event) => { event.preventDefault(); if (!locked) flip(false); });
+        forbidden.push(left);
+        node = el(doc, 'div', { class: 'sp-switch-arrow-block' }, `${name} `, link);
+        draw = () => link.classList.toggle('on', on);
+        draw();
+      }
+    }
+
     if (shape === 'class-only') {
-      const knob = el(doc, variant === 'link' ? 'a' : 'div', { class: variant === 'link' ? 'switch-bg' : 'toggle-control' }, 'o');
+      const knob = el(doc, 'div', { class: 'toggle-control' }, 'o');
       knob.addEventListener('click', () => flip(!on));
       node = el(doc, 'div', {}, `${name} `, knob);
       draw = () => knob.classList.toggle('on', on);
@@ -342,19 +368,46 @@
     }
 
     if (shape === 'radio-pair') {
-      const radios = ['on', 'off'].map((value) => el(doc, 'input', { type: 'radio', name: id, value }));
+      if (variant === 'plain') {
+        const radios = ['on', 'off'].map((value) => el(doc, 'input', { type: 'radio', name: id, value, disabled: locked && value === 'off' }));
+        radios[on ? 0 : 1].checked = true;
+        for (const r of radios) r.addEventListener('change', () => { on = radios[0].checked; changed(); });
+        node = el(doc, 'div', {}, `${name} `, el(doc, 'label', {}, radios[0], ' On'), el(doc, 'label', {}, radios[1], ' Off'));
+        get = () => radios[0].checked;
+        draw = () => { radios[on ? 0 : 1].checked = true; };
+      } else {
+        const onR = el(doc, 'div', { role: 'radio', value: 'on', tabindex: locked ? null : '0', 'aria-disabled': locked ? 'true' : null }, 'On');
+        const offR = el(doc, 'div', { role: 'radio', value: 'off', tabindex: locked ? null : '0', 'aria-disabled': locked ? 'true' : null }, 'Off');
+        onR.addEventListener('click', () => { if (!locked) flip(true); });
+        offR.addEventListener('click', () => { if (!locked) flip(false); });
+        forbidden.push(onR);
+        node = el(doc, 'div', { role: 'radiogroup' }, `${name} `, onR, offR);
+        draw = () => {
+          onR.setAttribute('aria-checked', String(on));
+          offR.setAttribute('aria-checked', String(!on));
+        };
+        draw();
+      }
+    }
+
+    if (shape === 'radio-group') {
+      const vals = variant === 'three' ? ['on', 'off', 'custom'] : ['1', '2'];
+      const radios = vals.map((value) => el(doc, 'input', { type: 'radio', name: id, value }));
       radios[on ? 0 : 1].checked = true;
-      node = el(doc, 'div', {}, `${name} `, el(doc, 'label', {}, radios[0], ' On'), el(doc, 'label', {}, radios[1], ' Off'));
+      node = el(doc, 'div', {}, `${name} `, ...radios.map((r, idx) => el(doc, 'label', {}, r, ` ${vals[idx]}`)));
       get = () => radios[0].checked;
       draw = () => { radios[on ? 0 : 1].checked = true; };
     }
 
     if (shape === 'aria-stuck') {
       const knob = el(doc, 'span', {}, 'o');
-      const button = el(doc, 'button', { type: 'button', role: 'switch', 'aria-checked': 'false' }, knob);
-      button.addEventListener('click', () => flip(!on));
-      node = el(doc, 'div', {}, `${name} `, button);
-      draw = () => knob.classList.toggle('translate-x', on);
+      const button = el(doc, 'button', { type: 'button', role: 'switch', 'aria-checked': 'false', disabled: locked }, knob);
+      button.addEventListener('click', () => { if (!locked) flip(!on); });
+      const rowEl = el(doc, 'div', {}, `${name} `, button);
+      node = el(doc, 'div', { id: 'bigidcmp-banner-widget' });
+      if (variant === 'bigid-shadow') node.attachShadow({ mode: 'open' }).append(rowEl);
+      else node.append(rowEl);
+      draw = () => { knob.className = on ? 'translate-x-[1.1rem]' : 'translate-x-0'; };
       draw();
     }
 
@@ -363,7 +416,7 @@
       node, forbidden, get, initial: get(), locked,
       set: (value) => { if (!locked) flip(value); },
       label: `${shape}/${variant}/${render}${locked ? `/locked-${lock}` : ''}`,
-      where: row.wrap, unreadable: Boolean(flags.unreadable), guess: Boolean(flags.guess),
+      where: row.wrap, unreadable: Boolean(flags.unreadable), outOfReach: Boolean(flags.outOfReach), guess: Boolean(flags.guess),
     };
   }
 
@@ -482,10 +535,11 @@
   };
 
   // How the panel ended. `saved`: its settings were saved and reported as "optional cookies off".
-  //   pass         every switch that is not locked is off, nothing else changed or was clicked
+  //   pass         every switch that is not locked is off, nothing else changed or was clicked;
+  //                or the panel holds an unreadable control and was not saved (with no harm)
   //   harm         a locked or outside switch changed, a switch was turned on, or a forbidden click
-  //   false-saved  saved and reported, with a switch still on
-  //   not-saved    a switch is still on, and nothing was saved or reported as saved
+  //   false-saved  saved and reported, with an unreadable control present or a switch still on
+  //   not-saved    a switch is still on (with no unreadable control), and nothing was saved
   // A "Legitimate Interest" view that was never opened counts as a switch left on.
   function judge(panel, saved) {
     const states = panel.savedWith ?? panel.switches.map((item) => item.get());
@@ -498,16 +552,24 @@
     const badClicks = panel.clicks.filter((target) => within(target, panel.forbidden) || !within(target, panel.banners))
       .map((target) => (target.textContent || target.tagName).trim().slice(0, 30));
     const harm = turnedOn.length > 0 || lockedChanged.length > 0 || badClicks.length > 0 || !panel.outside();
-    const kind = harm ? 'harm' : leftOn.length === 0 ? 'pass' : saved ? 'false-saved' : 'not-saved';
-    const blame = harm ? [...turnedOn, ...lockedChanged] : leftOn;
-    // The shapes left on (or harmed), each once; without one, the clicks that were wrong.
+    const unreadable = items.filter((item) => !item.locked && item.unreadable);
+    const hasUnreadable = unreadable.length > 0;
+    const savedUnreadable = hasUnreadable && saved;
+    const kind = harm ? 'harm'
+      : hasUnreadable ? (saved ? 'false-saved' : 'pass')
+      : leftOn.length === 0 ? 'pass'
+      : saved ? 'false-saved' : 'not-saved';
+    const blame = harm ? [...turnedOn, ...lockedChanged]
+      : savedUnreadable ? unreadable
+      : leftOn;
+    // The shapes left on (or harmed, or saved while unreadable), each once; without one, the clicks that were wrong.
     const shapes = new Map(blame.map((item) => [item.label.replace(/\/locked.*/, ''),
-      item.unreadable ? ' [unreadable]' : item.guess ? ' [guess]' : '']));
+      item.unreadable ? ' [unreadable]' : item.outOfReach ? ' [out-of-reach]' : item.guess ? ' [guess]' : '']));
     if (kind !== 'pass' && !shapes.size) shapes.set(badClicks.length ? `clicked "${badClicks[0]}"` : 'outside the banner', '');
     return {
-      kind, saved,
+      kind, saved, hasUnreadable, savedUnreadable,
       shapes: [...shapes].map(([label, tag]) => label + tag).sort(),
-      unreadableOnly: blame.length > 0 && blame.every((item) => item.unreadable),
+      outOfReachOnly: !harm && !savedUnreadable && blame.length > 0 && blame.every((item) => item.outOfReach),
       master: Boolean(panel.spec.master),
       leftOn: leftOn.map((item) => `${item.label}@${item.where}`),
       turnedOn: turnedOn.map((item) => item.label),

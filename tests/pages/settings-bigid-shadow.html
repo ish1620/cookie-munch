@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings with BigID switches in a shadow root</title>
+<meta name="expect" content="settings,analytics,save">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="saved with optional cookies off">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings with BigID switches in a shadow root</h1>
+<p>Expect: opens "Manage preferences", reads the BigID switches inside the open shadow root of
+<code>#bigidcmp-banner-widget</code>, clicks only Analytics (which starts on with
+<code>translate-x-[1.1rem]</code> while <code>aria-checked</code> stays <code>"false"</code>), leaves the
+off switch and disabled switch untouched, and clicks "Save my choices".</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="bigidcmp-banner-widget">Manage preferences</button>
+</div>
+<div id="bigidcmp-banner-widget" class="fixed" role="dialog" aria-modal="true" data-banner hidden></div>
+<script>
+  const host = document.getElementById('bigidcmp-banner-widget');
+  const shadow = host.attachShadow({ mode: 'open' });
+  shadow.innerHTML = `
+    <h2>Cookie preferences</h2>
+    <p>Choose which cookies we and our partners may use on this site.</p>
+    <div>Strictly necessary <button type="button" role="switch" aria-checked="false" disabled data-test="necessary"><span class="inline-block translate-x-[1.1rem]">o</span></button></div>
+    <div>Analytics <button type="button" role="switch" aria-checked="false" data-test="analytics"><span class="inline-block translate-x-[1.1rem]">o</span></button></div>
+    <div>Marketing <button type="button" role="switch" aria-checked="false" data-test="marketing"><span class="inline-block translate-x-0">o</span></button></div>
+    <button data-test="accept">Accept all</button>
+    <button data-test="save">Save my choices</button>
+  `;
+  const state = new Map([['necessary', true], ['analytics', true], ['marketing', false]]);
+  let savedWithOptionalOn = false;
+  let lockedStillOn = true;
+  document.addEventListener('click', (event) => {
+    const target = event.composedPath()[0];
+    if (!target.closest) return;
+    const button = target.closest('button[role="switch"]');
+    if (button && shadow.contains(button)) {
+      button.setAttribute('aria-checked', 'false');
+      if (button.disabled) return;
+      const key = button.dataset.test;
+      const next = !state.get(key);
+      state.set(key, next);
+      button.querySelector('span').className = next ? 'inline-block translate-x-[1.1rem]' : 'inline-block translate-x-0';
+    }
+    const save = target.closest('[data-test="save"]');
+    if (save && shadow.contains(save)) {
+      savedWithOptionalOn = state.get('analytics') || state.get('marketing');
+      lockedStillOn = state.get('necessary');
+      host.hidden = true;
+    }
+  });
+  const baseResult = window.__result;
+  window.__result = () => {
+    const result = baseResult();
+    return { ...result, savedWithOptionalOn, lockedStillOn, pass: result.pass && !savedWithOptionalOn && lockedStillOn };
+  };
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

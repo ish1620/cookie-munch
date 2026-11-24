@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings with a pay-labelled radio pair</title>
+<meta name="expect" content="settings">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="hidden">
+<meta name="expect-last-decline" content="none">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings with a pay-labelled radio pair</h1>
+<p>Expect: opens "Manage preferences", clicks neither pay-labelled radio (including a pair where both
+radios carry pay labels) and does not click Save. The panel is hidden and reported "hidden".</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <label><input type="checkbox" checked data-test="analytics"> Analytics</label>
+  <form>
+    <div>Tracking
+      <label><input type="radio" name="track" value="on" checked data-test="pay-on-1"> Subscribe</label>
+      <label><input type="radio" name="track" value="off" data-test="pay-off-1"> Pay 5€</label>
+    </div>
+    <div>Ads
+      <input type="radio" id="pay-on-2" name="ads" value="on" checked data-test="pay-on-2"><label for="pay-on-2"> Subscribe</label>
+      <input type="radio" id="pay-off-2" name="ads" value="off" data-test="pay-off-2"><label for="pay-off-2"> Off — reject and pay 9€/month</label>
+    </div>
+  </form>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="save" data-close>Save my choices</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

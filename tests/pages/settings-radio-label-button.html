@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings with a radio pair labelled like a button</title>
+<meta name="expect" content="settings">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="hidden">
+<meta name="expect-last-decline" content="none">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings with a radio pair labelled like a button</h1>
+<p>Expect: opens "Manage preferences", clicks neither radio whose label reads as a button ("Accept all",
+"Save preferences"), and does not click Save: an unlocked radio outside a readable pair stops the save,
+so the panel is hidden and reported "hidden".</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <label><input type="checkbox" checked data-test="analytics"> Analytics</label>
+  <form>
+    <div>Option 1
+      <label><input type="radio" name="opt1" value="on" checked data-test="opt1-on"> On</label>
+      <label><input type="radio" name="opt1" value="off" data-test="opt1-off"> Accept all</label>
+    </div>
+    <div>Option 2
+      <input type="radio" id="opt2-on" name="opt2" value="on" checked data-test="opt2-on"><label for="opt2-on"> On</label>
+      <input type="radio" id="opt2-off" name="opt2" value="off" data-test="opt2-off"><label for="opt2-off"> Save preferences</label>
+    </div>
+  </form>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="save" data-close>Save my choices</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

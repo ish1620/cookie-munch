@@ -41,16 +41,28 @@ It watches the page for 30 seconds after it's shown. In **Decline** mode it trie
    text talks about cookies, or an element the cookie list has a rule for on that site.
 3. **Settings flow** (`SETTINGS`, `SAVE`, `LEGIT`, `OBJECT`): if a banner has only Accept and Settings, open
    the settings, switch every optional category off, and save. Switches are checkboxes, `role="switch"`,
-   `role="checkbox"` and toggle buttons (`aria-pressed`). A switch that holds other switches, also in its
-   shadow DOM, is one switch, turned off by one click: on its "Off" part (the one with the class `off`)
-   when it is drawn as an "Off" and an "On" part, on the switch inside it when its own markup holds just
-   one (a styled switch around the real checkbox), and on itself otherwise. After a click it waits a
-   moment before reading the next switch, since one switch can turn others off. If the panel has a
-   "Legitimate interest" tab or button, it opens that view before saving, clicks "Object all" if there is
-   one, waits a moment for that to be drawn, and switches off what is still on there: those purposes are
-   on until objected to. It does that once per page. If the settings have no switch it can turn off and
-   no such view, it saves nothing and leaves the banner to step 4; the same if that view leaves no Save
-   button. Toggle buttons that move around the panel (`NAV`: "PARTNERS", "BACK") are no switches.
+   `role="checkbox"`, toggle buttons (`aria-pressed`), known class-only switches (`KNOWN_SWITCHES`:
+   Sourcepoint's privacy-manager frame toggles and BigID's switches), and on/off radio pairs (two radios
+   of one name in one form, or two `role="radio"` in one `role="radiogroup"`, with values `on` and `off`
+   and one chosen). A switch that holds other switches, also in its shadow DOM, is one switch, turned off
+   by one click: on its "Off" part (the one with the class `off`) when it is drawn as an "Off" and an
+   "On" part, on the switch inside it when its own markup holds just one (a styled switch around the real
+   checkbox), and on itself otherwise. After a click it waits a moment before reading the next switch,
+   since one switch can turn others off. If the panel has a "Legitimate interest" tab or button, it opens
+   that view before saving, clicks "Object all" if there is one, waits a moment for that to be drawn, and
+   switches off what is still on there: those purposes are on until objected to. It does that once per
+   page. If the settings hold an unlocked control it cannot read (an `aria-pressed` or `aria-checked`
+   element outside the switches above, a known-platform switch that leaves the page or carries a button
+   label, or any radio outside a readable on/off pair, not counting tabs, locked controls, parts or
+   wrappers of readable switches, or—for non-radio ARIA controls—controls with a button label), checked
+   again right before Save, or have no switch it can turn off and no legitimate-interest view, it saves
+   nothing and leaves the banner to step 4 (hidden, reported `hidden`); the same if that view leaves no
+   Save button. Limit: a class-only switch of a platform not in `KNOWN_SWITCHES` that carries no ARIA
+   state is not detected, and a panel holding one beside readable switches is still saved. A radio's
+   label text is checked as both a pay label and a button label (`KINDS`), so a pair with any radio
+   labelled like a button or pay control is never clicked and blocks Save unless locked. Toggle buttons
+   and known class-only switches that carry a button label (`KINDS`, e.g. `NAV` "PARTNERS"/"BACK" or
+   Accept) or a pay label are no switches.
 4. **Hide the rest**: 4 seconds in, add the cookie list's CSS and hide any banner from steps 1-3 that's
    still showing. If it had frozen page scrolling, unfreeze it. This waits (up to 6 s more) while the page
    is still loading or a decline is under way, so late banners get declined rather than hidden.
@@ -135,9 +147,9 @@ python3 -m http.server 8765 --bind 127.0.0.1
   the navigation.
 - **Mock banners, one by one:** open <http://127.0.0.1:8765/tests/>. On each page, keep the tab in front,
   wait 32 seconds (the extension watches a page for 30), then run `__result()` in the browser console;
-  it must say `pass: true`. There are 37 pages that should be declined, 1 that should be declined once and
+  it must say `pass: true`. There are 45 pages that should be declined, 1 that should be declined once and
   then hide the banner on the page it loads (it goes on to a second page, not listed, and is judged there),
-  5 that should open the settings and then hide the banner, 19 that should be hidden without a click, 6 where
+  13 that should open the settings and then hide the banner, 19 that should be hidden without a click, 6 where
   nothing may be touched, and 5 where a decline must not be reported.
 - **Labels:** `node tests/labels.mjs`. Exits with 1 if a label is classified wrong.
 - **Popup:** <http://127.0.0.1:8765/tests/popup-preview.html> shows the real popup in every state.

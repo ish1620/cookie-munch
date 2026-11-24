@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings with a known switch that leaves the page</title>
+<meta name="expect" content="settings">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="hidden">
+<meta name="expect-last-decline" content="none">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings with a known switch that leaves the page</h1>
+<p>Expect: opens "Manage preferences", clicks neither the Sourcepoint switch link whose <code>href</code>
+leaves the page nor Save. Because a known platform's switch cannot be used safely, the panel is hidden
+and reported "hidden".</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <label><input type="checkbox" checked data-test="analytics"> Analytics</label>
+  <div class="sp-switch-arrow-block">Marketing <a class="switch-bg on" href="other-page.html" data-test="sp-link">toggle</a></div>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="save" data-close>Save my choices</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

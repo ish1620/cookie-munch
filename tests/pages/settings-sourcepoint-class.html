@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings with Sourcepoint class-only switches</title>
+<meta name="expect" content="settings,sp-on,sp-neutral-on-right,save">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="saved with optional cookies off">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings with Sourcepoint class-only switches</h1>
+<p>Expect: opens "Manage preferences", clicks only the two optional switches that start on (the
+<code>switch-bg.on</code> link and the <code>.right</code> part of <code>a.neutral.on</code>), leaves the
+switches that start off and the locked switch untouched, and clicks "Save &amp; Exit".</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <div class="sp-switch-arrow-block">Strictly necessary <a class="switch-bg on" href="#" aria-disabled="true" data-test="sp-locked">toggle</a></div>
+  <div class="sp-switch-arrow-block">Analytics <a class="switch-bg on" href="#" data-test="sp-on">toggle</a></div>
+  <div class="sp-switch-arrow-block">Marketing <a class="switch-bg" href="#" data-test="sp-off">toggle</a></div>
+  <div class="sp-switch-arrow-block">Advertising <a class="neutral on" href="#" data-test="sp-neutral-on"><span class="left" data-test="sp-neutral-on-left">On</span><span class="right" data-test="sp-neutral-on-right">Off</span></a></div>
+  <div class="sp-switch-arrow-block">Personalisation <a class="neutral" href="#" data-test="sp-neutral-off"><span class="left" data-test="sp-neutral-off-left">On</span><span class="right" data-test="sp-neutral-off-right">Off</span></a></div>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="save" data-close>Save &amp; Exit</button>
+</div>
+<script>
+  document.addEventListener('click', (event) => {
+    const bg = event.target.closest('.sp-switch-arrow-block a.switch-bg');
+    if (bg && bg.getAttribute('aria-disabled') !== 'true') {
+      bg.classList.toggle('on');
+    }
+    const neutral = event.target.closest('a.neutral');
+    if (neutral) {
+      if (event.target.closest('.right')) neutral.classList.remove('on');
+      else if (event.target.closest('.left')) neutral.classList.add('on');
+    }
+  });
+  let savedWithOptionalOn = false;
+  let lockedStillOn = true;
+  document.querySelector('[data-test="save"]').addEventListener('click', () => {
+    const optional = ['sp-on', 'sp-off', 'sp-neutral-on', 'sp-neutral-off']
+      .map((name) => document.querySelector(`[data-test="${name}"]`));
+    savedWithOptionalOn = optional.some((el) => el.classList.contains('on'));
+    lockedStillOn = document.querySelector('[data-test="sp-locked"]').classList.contains('on');
+  }, true);
+  const baseResult = window.__result;
+  window.__result = () => {
+    const result = baseResult();
+    return { ...result, savedWithOptionalOn, lockedStillOn, pass: result.pass && !savedWithOptionalOn && lockedStillOn };
+  };
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

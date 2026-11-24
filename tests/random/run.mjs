@@ -16,8 +16,9 @@
 // Every panel comes from a seed and an index, printed with each failure: --only seed:index runs it
 // again, and tests/random/page.html?seed=S&index=I&ext=/extension shows it in a browser (serve the
 // repository root first). With several --ext, a panel the first one handled and a later one doesn't
-// is listed as a regression. Exits with 1 if the last --ext failed on a panel whose switches a reader
-// can go by (a shape marked unreadable in panels.js is expected to stay on, and is counted apart).
+// is listed as a regression. Exits with 1 if the last --ext failed on a panel with readable switches,
+// saved a panel holding an unreadable control, or harmed a panel (out-of-reach unknown class-only
+// shapes are counted apart).
 import { createServer } from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, join, extname, sep } from 'node:path';
@@ -81,7 +82,7 @@ function switchCode(source, name) {
     const loop = cut('    let switched = 0;', '    log(`switched off', 'the switch-off loop').replaceAll('save.banner', 'banner');
     code += `  function switchOff(banner) {\n${loop}    return switched;\n  }\n`;
   }
-  return `'use strict';\n${code}\nreturn { switchesIn, isOn, isLocked, hasToggles, canSwitchOff, switchOff };`;
+  return `'use strict';\n${code}\nreturn { switchesIn, isOn, isLocked, hasToggles, canSwitchOff, switchOff, hasUnreadable: typeof hasUnreadable === 'function' ? hasUnreadable : () => false };`;
 }
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json' };
@@ -121,7 +122,7 @@ async function unitInPage({ seed, from, to, names, settle, details }) {
       document.body.append(mount);
       const panel = RandomPanels.build(spec, document, mount);
       const api = window.__switchCode[name];
-      const saved = api.canSwitchOff(panel.banner); // the settings flow saves only then
+      const saved = api.canSwitchOff(panel.banner) && !api.hasUnreadable(panel.banner); // the settings flow saves only then
       const run = { index, name, panel, mount, saved, error: null };
       run.done = Promise.resolve().then(() => api.switchOff(panel.banner)).catch((error) => { run.error = String(error); });
       runs.push(run);
@@ -216,27 +217,28 @@ try {
     for (const [key, byName] of results) console.log(key, JSON.stringify(byName, null, 2));
   }
   const failedHere = (verdict) => verdict.kind !== 'pass';
-  // Totals per level, seed and version. "readable" leaves out failures that only unreadable shapes caused.
-  console.log('\nlevel  seed  version      panels  failed  (readable)  harm  false-saved  not-saved');
+  // Totals per level, seed and version. "judged" leaves out failures caused only by out-of-reach shapes.
+  console.log('\nlevel  seed  version      panels  failed  (judged)  harm  false-saved  not-saved  saved-unreadable');
   const totals = new Map();
   for (const [key, byName] of results) {
     const [level, seed] = key.split(' ');
     for (const name of names) {
       const verdict = byName[name];
-      const total = totals.get(`${level} ${seed} ${name}`) ?? { panels: 0, failed: 0, readable: 0, harm: 0, 'false-saved': 0, 'not-saved': 0 };
+      const total = totals.get(`${level} ${seed} ${name}`) ?? { panels: 0, failed: 0, judged: 0, harm: 0, 'false-saved': 0, 'not-saved': 0, savedUnreadable: 0 };
       total.panels++;
+      if (verdict.savedUnreadable) total.savedUnreadable++;
       if (failedHere(verdict)) {
         total.failed++;
         total[verdict.kind]++;
-        if (!verdict.unreadableOnly) total.readable++;
+        if (!verdict.outOfReachOnly) total.judged++;
       }
       totals.set(`${level} ${seed} ${name}`, total);
     }
   }
   for (const [key, t] of totals) {
     const [level, seed, name] = key.split(' ');
-    console.log(`${level.padEnd(6)} ${seed.padEnd(5)} ${name.padEnd(12)} ${String(t.panels).padStart(6)}  ${String(t.failed).padStart(6)}  ${String(t.readable).padStart(10)}  ${String(t.harm).padStart(4)}  ${String(t['false-saved']).padStart(11)}  ${String(t['not-saved']).padStart(9)}`);
-    if (name === names.at(-1) && t.readable > 0) exitCode = 1;
+    console.log(`${level.padEnd(6)} ${seed.padEnd(5)} ${name.padEnd(12)} ${String(t.panels).padStart(6)}  ${String(t.failed).padStart(6)}  ${String(t.judged).padStart(8)}  ${String(t.harm).padStart(4)}  ${String(t['false-saved']).padStart(11)}  ${String(t['not-saved']).padStart(9)}  ${String(t.savedUnreadable).padStart(16)}`);
+    if (name === names.at(-1) && t.judged > 0) exitCode = 1;
   }
 
   // Failure classes: what was left on (or harmed), per level, with how many panels per version and one to run again.

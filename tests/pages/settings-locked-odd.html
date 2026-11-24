@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings with locked odd controls beside a readable switch</title>
+<meta name="expect" content="settings,analytics,save">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="saved with optional cookies off">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings with locked odd controls beside a readable switch</h1>
+<p>Expect: opens "Manage preferences", leaves every locked control alone (<code>disabled</code> on a
+non-form control, a non-form control inside a disabled <code>fieldset</code>, <code>aria-disabled</code>,
+<code>readonly</code>, and three radios in a disabled <code>fieldset</code>), switches Analytics off, and
+clicks "Save my choices".</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <div aria-pressed="true" disabled data-test="locked-attr">Required 1</div>
+  <fieldset disabled>
+    <div aria-pressed="true" data-test="locked-fieldset">Required 2</div>
+    <label><input type="radio" name="req" value="1" checked data-test="locked-r1"> 1</label>
+    <label><input type="radio" name="req" value="2" data-test="locked-r2"> 2</label>
+    <label><input type="radio" name="req" value="3" data-test="locked-r3"> 3</label>
+  </fieldset>
+  <div aria-checked="true" aria-disabled="true" data-test="locked-aria">Required 3</div>
+  <span aria-pressed="true" readonly data-test="locked-readonly">Required 4</span>
+  <label><input type="checkbox" checked data-test="analytics"> Analytics</label>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="save" data-close>Save my choices</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

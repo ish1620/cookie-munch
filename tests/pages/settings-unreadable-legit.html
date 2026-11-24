@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings with an unreadable switch in the Legitimate Interest view</title>
+<meta name="expect" content="settings,analytics,legit-tab">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="hidden">
+<meta name="expect-last-decline" content="none">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings with an unreadable switch in the Legitimate Interest view</h1>
+<p>Expect: opens "Manage preferences", switches Analytics off, opens the "Legitimate Interest" tab, sees an
+unreadable control there, and does not click Save. The panel is hidden and reported "hidden".</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <div><div role="tab" data-test="consent-tab">User Consent</div>
+       <div role="tab" data-test="legit-tab" data-view="legit-view">Legitimate Interest</div></div>
+  <label><input type="checkbox" checked data-test="analytics"> Analytics</label>
+  <template id="legit-view">
+    <div>Advertising <button role="switch" aria-checked="true" data-test="li-ads">on</button></div>
+    <div>Profiling <div aria-pressed="true" tabindex="0" data-test="li-odd">on</div></div>
+  </template>
+  <button data-test="save" data-close>Save &amp; Exit</button>
+  <button data-test="accept" data-close>Accept all</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

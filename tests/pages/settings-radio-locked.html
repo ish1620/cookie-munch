@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings with a radio pair whose off radio is disabled</title>
+<meta name="expect" content="settings,analytics,save">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="saved with optional cookies off">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Settings with a radio pair whose off radio is disabled</h1>
+<p>Expect: opens "Manage preferences", leaves the required radio pair alone (its "off" radio is disabled),
+switches Analytics off, and clicks "Save my choices".</p>
+<div class="fixed" data-banner>
+  <p>We use cookies to give you the best experience on our site.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <form>
+    <div>Strictly necessary
+      <label><input type="radio" name="necessary" value="on" checked data-test="necessary-on"> On</label>
+      <label><input type="radio" name="necessary" value="off" disabled data-test="necessary-off"> Off</label>
+    </div>
+  </form>
+  <div role="radiogroup">Security
+    <div role="radio" value="on" aria-checked="true" tabindex="0" data-test="sec-on">On</div>
+    <div role="radio" value="off" aria-checked="false" aria-disabled="true" data-test="sec-off">Off</div>
+  </div>
+  <label><input type="checkbox" checked data-test="analytics"> Analytics</label>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="save" data-close>Save my choices</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

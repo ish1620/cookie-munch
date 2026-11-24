@@ -144,6 +144,8 @@ cookie list.
 
 - Hiding rules: [EasyList Cookie List](https://easylist.to) by the EasyList authors. See
   [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- Class-only switch selectors for Sourcepoint's privacy-manager frame and BigID: read from
+  [DuckDuckGo autoconsent](https://github.com/duckduckgo/autoconsent)'s rules.
 - Built with a lot of help from [Claude Code](https://claude.com/claude-code). The mascot artwork
   started in an image generator and was cleaned up by `tools/icons_from_image.py`.
 
