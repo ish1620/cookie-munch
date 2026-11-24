@@ -135,9 +135,14 @@ python3 -m http.server 8765 --bind 127.0.0.1
   judged only for a site marked `"legitimateInterest": "judged"` in `sites.json`, one whose settings Cookie
   Munch opens: there every purpose's legitimate interest must be off too. For the other sites it is printed
   and not judged, because a site's own Reject button can leave it on. SKIP: a challenge or block page, which is
-  never worked around, or a site that showed no banner this time. Any FAIL, or no PASS at all, exits with 1.
+  never worked around, a page that didn't load or timed out, or a site that showed no banner this time. Navigation
+  waits up to 30 s, and every step after the page loads up to 60 s (the title and challenge check, reading
+  cookies and records, the banner check, closing the page; a busy page answers late, a frozen one never): a
+  frozen site ends as SKIP with the step named, and the run goes on to the next site. A verdict already reached stands when only the closing times out. Any FAIL, or no PASS at all, exits with 1.
   Sites answer by where the visitor is, so results from outside the EU differ; it doesn't run in GitHub Actions.
-  The list holds only sites Cookie Munch should decline.
+  The list holds only sites Cookie Munch should decline. To check the runner itself against local pages (frozen
+  pages, challenge pages and near misses, without visiting real sites), run `node tests/live/test_live.mjs`; it is
+  local only as well.
 - **Random switch panels (local only, for work on the switch code):** `node tests/random/run.mjs` builds
   seeded random settings panels from real switch shapes and lists the ones left with a switch on; its header
   has the options.
