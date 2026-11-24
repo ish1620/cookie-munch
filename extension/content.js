@@ -37,6 +37,7 @@
   const SWITCH_REDRAW_MS = 100;    // after clicking a switch, wait for the panel to redraw before reading the next one,
   const MAX_SWITCH_WAITS = 20;     // for this many clicks in one go (a long list is not held up for longer)
   const MAX_CLICKS = 4;            // give up after this many tries on one page
+  const NO_RETRY_MS = 10000;       // a page of the same site that starts this soon after a decline doesn't decline again
   const MAX_BANNER_TEXT = 8000;    // a "banner" with more text than this is probably the whole page
   const HIDE_AFTER_MS = 4000;      // Decline mode: hide what's left this long after the page is shown,
   const HIDE_AFTER_LOAD_MS = 1500; // and at least this long after it finished loading (consent scripts come late)
@@ -512,6 +513,16 @@
     send({ type: 'declined', platform, how });
   }
 
+  const siteKey = (host) => host.replace(/^www\./, '');
+
+  // Remember this decline in the extension's storage without waiting, so a new page this click
+  // loads on the same site within NO_RETRY_MS only hides its banner (start() reads it).
+  function recordDecline() {
+    try {
+      api?.storage?.local?.set({ lastDecline: { site: siteKey(siteHost()), at: Date.now() } })?.catch?.(() => {});
+    } catch {}
+  }
+
   function click(el) {
     tried.add(el);
     if (!press(el)) return false;
@@ -557,6 +568,7 @@
     };
 
     if (watchFrame) addEventListener('pagehide', onPageHide); // before the click: it can unload the frame at once
+    if (!showsPay(el) && !el.matches(':disabled')) recordDecline(); // only for a click the browser will make
     if (!click(el)) { // not safe to click after all: look for another button
       cleanup();
       stage = previous;
@@ -885,13 +897,34 @@
   async function start() {
     if (!(document.documentElement instanceof HTMLElement)) return; // XML, SVG, etc.
     const host = siteHost();
+    const site = siteKey(host);
     let settings = {};
     try {
-      settings = (await api?.storage?.local.get({ disabledSites: [], mode: 'decline' })) ?? {};
+      settings = (await api?.storage?.local.get({ disabledSites: [], mode: 'decline', lastDecline: null })) ?? {};
     } catch {}
-    if ((settings.disabledSites ?? []).includes(host.replace(/^www\./, ''))) return;
+    if ((settings.disabledSites ?? []).includes(site)) return;
     mode = settings.mode === 'hide' ? 'hide' : 'decline';
     genericOff = GENERIC_SKIP_HOSTS.includes(host);
+
+    // No second try: a decline on this site moments ago may have loaded this very page, with the
+    // banner on it again. Then this page only hides, for its whole watch, as in Hide-only mode.
+    // Its frames can start any time while it is watched, so the page holds the record for them
+    // that long ("held"); a frame goes by either sign, a page only by the decline's own time.
+    const last = settings.lastDecline;
+    if (last) {
+      const now = Date.now();
+      const fresh = typeof last.at === 'number' && now >= last.at && now - last.at <= NO_RETRY_MS;
+      const held = typeof last.held === 'number' && now <= last.held && last.held - now <= WATCH_MS;
+      if (!fresh && !held) {
+        try { api?.storage?.local?.remove?.('lastDecline')?.catch?.(() => {}); } catch {}
+      } else if (last.site === site && mode === 'decline' && (fresh || (!IS_TOP && held))) {
+        mode = 'hide';
+        log('a decline ran on this site moments ago: only hiding here');
+        if (IS_TOP) {
+          try { api?.storage?.local?.set({ lastDecline: { ...last, held: now + WATCH_MS } })?.catch?.(() => {}); } catch {}
+        }
+      }
+    }
 
     if (mode === 'hide') requestHide(); // as early as possible, before the banner is drawn
     await domReady();

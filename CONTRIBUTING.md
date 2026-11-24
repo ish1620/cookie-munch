@@ -55,6 +55,17 @@ It watches the page for 30 seconds after it's shown. In **Decline** mode it trie
    still showing. If it had frozen page scrolling, unfreeze it. This waits (up to 6 s more) while the page
    is still loading or a decline is under way, so late banners get declined rather than hidden.
 
+**No second try:** right before a reject or Save click, `content.js` writes the site's name (the host without
+`www.`, as the per-site switch) and the time to `storage.local` without waiting, then clicks. A page of the
+same site that starts within 10 seconds only hides, as in Hide-only mode, for its whole watch: some sites
+answer a decline by loading a new page with the banner on it again, and would be declined over and over. Such
+a page also holds the record for its frames, which can start any time while it is watched. The record is
+removed by the first page that reads it after that. The costs: another tab of the same site that starts
+within those 10 seconds only hides too; a frame on another page of the site gets no click while a held-back
+page still holds the record (30 seconds at most). Confirmed on test pages in WebKit's test runner; in
+Safari itself it is not yet verified (if Safari drops a write made just before a page unloads, the repeats
+are not stopped): `tests/demo-reload.html` is the page to try with the installed extension.
+
 After a reject or Save click, `finish` checks 1.5 seconds later that the clicked button is no longer
 visible before reporting a decline. For a reject click inside an iframe, the outer page often removes or
 hides (`display: none`) the `<iframe>` itself without changing what is inside it, which the frame can't
@@ -112,13 +123,17 @@ python3 -m http.server 8765 --bind 127.0.0.1
 ```
 
 - **Mock banners, all at once:** `swift tools/run_pages.swift` runs every page in WebKit (Safari's engine)
-  and prints PASS or FAIL for each, in about 5 minutes. It reads each page once, 2 seconds after the
-  extension stops watching it (30 seconds after the page loads), so a late wrong click still fails.
+  and prints PASS or FAIL for each, in about 6 minutes. It reads each page once, 2 seconds after the
+  extension stops watching it (30 seconds after the page loads), so a late wrong click still fails. A page
+  that loads another (a decline that loads a new page) is read once, after the watch of the page it loads;
+  the harness keeps the clicks, page loads and stand-in `storage.local` in `sessionStorage`, so they outlive
+  the navigation.
 - **Mock banners, one by one:** open <http://127.0.0.1:8765/tests/>. On each page, keep the tab in front,
   wait 32 seconds (the extension watches a page for 30), then run `__result()` in the browser console;
-  it must say `pass: true`. There are 34 pages that should be declined, 4 that should open the settings
-  and then hide the banner, 10 that should be hidden without a click, 4 where nothing may be touched,
-  and 5 where a decline must not be reported.
+  it must say `pass: true`. There are 37 pages that should be declined, 1 that should be declined once and
+  then hide the banner on the page it loads (it goes on to a second page, not listed, and is judged there),
+  4 that should open the settings and then hide the banner, 16 that should be hidden without a click, 6 where
+  nothing may be touched, and 5 where a decline must not be reported.
 - **Labels:** `node tests/labels.mjs`. Exits with 1 if a label is classified wrong.
 - **Popup:** <http://127.0.0.1:8765/tests/popup-preview.html> shows the real popup in every state.
   Add `?lang=ja` or `?lang=es` for the translations and `&repo=1` to show the Report link.

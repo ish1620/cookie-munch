@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stale decline record on the same site (11 s old)</title>
+<meta name="last-decline-age" content="11000">
+<meta name="expect" content="reject">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="rejected">
+<meta name="expect-last-decline" content="fresh">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Stale decline record on the same site (11 s old)</h1>
+<p>Expect: storage holds an 11 s old decline record for this site (past the 10 s window). The stale record
+is removed, "Reject all" is clicked as usual, and a fresh record replaces it.</p>
+<div class="fixed" data-banner>
+  <p>We use cookies for analytics and personalised ads.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="reject" data-close>Reject all</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

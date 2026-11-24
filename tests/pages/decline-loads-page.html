@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A decline that loads a page with the banner again</title>
+<meta name="expect" content="reject">
+<meta name="expect-loads" content="2">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="hidden">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>A decline that loads a page with the banner again</h1>
+<p>Expect: clicks "Reject all", which loads a second page with the same banner. That second page does not
+click again and hides its banner instead (1 click and 2 page loads in all, judged on the second page).</p>
+<div class="fixed" data-banner>
+  <p>We use cookies for analytics and personalised ads.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="reject" data-go="decline-loads-page-2.html">Reject all</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

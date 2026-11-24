@@ -2,6 +2,8 @@
 // __result().pass is true. Up to 6 pages run side by side in offscreen windows (~5 minutes for the suite).
 // Each page is read once, after the extension has stopped watching it: WATCH_MS (read from content.js)
 // after the page loads, plus a short margin. So a wrong click late in the watch still fails the page.
+// A page that loads another page (a decline that loads a new one) is read once too, after the watch of
+// the page it loads; pages loaded after that don't move the reading, and the harness counts them.
 // WebKit counts an offscreen window as hidden and, a few seconds in, nearly stops its timers, so the watch
 // would never run to its end. A private WebKit setting turns that check off (see keepTimersRunning).
 //
@@ -66,6 +68,9 @@ final class PageRun: NSObject, WKNavigationDelegate {
                           styleMask: .borderless, backing: .buffered, defer: false)
     let webView: WKWebView
     let finished: (String, Bool, String) -> Void
+    var loads = 0                      // pages loaded in this web view so far
+    var reading: DispatchWorkItem?     // the one reading of the result, once scheduled
+    var done = false
 
     init(_ name: String, finished: @escaping (String, Bool, String) -> Void) {
         self.name = name
@@ -88,8 +93,14 @@ final class PageRun: NSObject, WKNavigationDelegate {
 
     // The extension starts its watch a few milliseconds after the page loads (once the harness has read the
     // cookie list), so the margin also covers that.
+    // The first page, and the one it loads, each set the reading to their own watch's end.
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + watch + marginSeconds) { self.check() }
+        loads += 1
+        guard loads <= 2 else { return }
+        reading?.cancel()
+        let read = DispatchWorkItem { self.check() }
+        reading = read
+        DispatchQueue.main.asyncAfter(deadline: .now() + watch + marginSeconds, execute: read)
     }
 
     // Read the page's result, once.
@@ -97,13 +108,22 @@ final class PageRun: NSObject, WKNavigationDelegate {
         webView.evaluateJavaScript("JSON.stringify(window.__result())") { value, error in
             let json = value as? String ?? "{\"error\": \"\(String(describing: error))\"}"
             let result = (try? JSONSerialization.jsonObject(with: Data(json.utf8))) as? [String: Any]
-            self.window.close()
-            self.finished(self.name, result?["pass"] as? Bool == true, json)
+            self.end(result?["pass"] as? Bool == true, json)
         }
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        finished(name, false, "{\"error\": \"\(error.localizedDescription)\"}")
+        if (error as NSError).code == NSURLErrorCancelled { return }
+        end(false, "{\"error\": \"\(error.localizedDescription)\"}")
+    }
+
+    // Report this page's result, once.
+    func end(_ pass: Bool, _ json: String) {
+        guard !done else { return }
+        done = true
+        reading?.cancel()
+        window.close()
+        finished(name, pass, json)
     }
 }
 

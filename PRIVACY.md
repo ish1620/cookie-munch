@@ -8,8 +8,10 @@ Cookie Munch doesn't collect, store or send any personal data.
 - **What it reads:** to find and answer cookie banners, it runs on the pages you visit and looks at their
   buttons and banners. It doesn't keep or send any of that.
 - **What it stores, on your device only:** your settings (the mode, and the sites you switched it off for), a
-  count of banners handled, and, until you leave a page, what it did there (for the popup). Safari keeps
-  these in the extension's own storage. Removing the extension deletes them.
+  count of banners handled, until you leave a page what it did there (for the popup), and the name of the
+  site where it last declined a banner, with the time, so that a page the decline reloads isn't declined
+  again (kept for seconds: the first page it runs on afterwards removes it). Safari keeps these in the extension's own storage. Removing
+  the extension deletes them.
 - **Report it link:** the popup's "Report it" link opens a GitHub page in a new tab with the current site's
   name and your setup filled in: Cookie Munch's mode and version, and whether you're on a Mac, iPhone or iPad.
   Nothing is sent unless you choose to submit the issue on GitHub, under your GitHub account. GitHub's

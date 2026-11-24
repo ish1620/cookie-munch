@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Recent decline on the same site (2 s old): a banner that comes late</title>
+<meta name="last-decline-age" content="2000">
+<meta name="expect" content="">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="hidden">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Recent decline on the same site (2 s old): a banner that comes late</h1>
+<p>Expect: storage holds a 2 s old decline record for this site, so this page only hides for its whole
+watch: the banner that appears after 6 seconds gets no click and is hidden.</p>
+<script>
+  setTimeout(() => {
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="fixed" data-banner>
+        <p>We use cookies for analytics and personalised ads.</p>
+        <button data-test="accept" data-close>Accept all</button>
+        <button data-test="reject" data-close>Reject all</button>
+      </div>`);
+  }, 6000);
+</script>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

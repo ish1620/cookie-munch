@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A reject button the page has switched off writes no record</title>
+<meta name="expect" content="">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-last-decline" content="none">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>A reject button the page has switched off writes no record</h1>
+<p>Expect: the banner's buttons sit in a disabled fieldset, so the browser makes no click. Nothing is
+recorded as a decline (a record would hold back the next page of this site for nothing), and the banner is
+hidden in the end.</p>
+<div class="fixed" data-banner>
+  <p>We use cookies for analytics and personalised ads.</p>
+  <fieldset disabled>
+    <button data-test="accept" data-close>Accept all</button>
+    <button data-test="reject" data-close>Reject all</button>
+  </fieldset>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

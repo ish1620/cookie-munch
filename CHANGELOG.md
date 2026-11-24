@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- When a decline loads a new page on the same site with the banner on it again, Cookie Munch no longer
+  declines again there: for 10 seconds after a decline, a page of the same site only hides its banner, and
+  so do its frames. Confirmed on test pages in WebKit; not yet verified in Safari itself.
 - A decline made inside an iframe is now reported when the page around it removes the frame or
   hides it after the reject click. Confirmed on test pages in WebKit; not yet verified in Safari
   itself.
@@ -24,7 +27,7 @@
 - After "Object all" in a "Legitimate interest" view, and after each switch it clicks, Cookie Munch waits
   a moment before it reads the next switch, so one that another control turned off is not clicked back on.
 - Tests: each mock page is judged once, after the extension stops watching it, so a late wrong click fails.
-  New pages cover settings panels.
+  New pages cover settings panels, and a mock page can load a second page and be judged there.
 - Tests: the label checker exits with 1 when a label is classified wrong.
 - The weekly cookie-list pull request starts its own checks.
 - Tests: `npm run test:live` checks real EU sites from your own Mac and judges each by the consent record
