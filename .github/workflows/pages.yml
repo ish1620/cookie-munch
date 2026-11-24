@@ -15,7 +15,9 @@ permissions:
 jobs:
   pages:
     runs-on: macos-latest
-    timeout-minutes: 10
+    # Above the runner's own give-up time (tools/run_pages.swift), which grows with the number of
+    # pages: raise this when that time comes near it.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Serve the repository

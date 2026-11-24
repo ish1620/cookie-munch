@@ -1,6 +1,6 @@
 // Runs the mock banner pages (tests/pages) and the standalone demo page (docs/demo/index.html) in WebKit,
 // Safari's engine, and checks that each one's __result().pass is true. Up to 6 pages run side by side in
-// offscreen windows (~5-8 minutes for the suite).
+// offscreen windows (about half a minute for every six pages).
 // Each mock page is read once, after the extension has stopped watching it: WATCH_MS (read from content.js)
 // after the page loads, plus a short margin. So a wrong click late in the watch still fails the page.
 // A page that loads another page (a decline that loads a new one) is read once too, after the watch of
@@ -281,9 +281,11 @@ func startNext() {
     })
 }
 for _ in 0..<min(parallel, specs.count) { startNext() }
-// Give up after the time the pages need, six at a time, and a minute more.
+// Give up after half as long again as the pages' watches take, six at a time, and never less than a
+// minute more: loading the pages takes time too, and more of it the more pages there are.
 let rounds = (Double(specs.count) / Double(parallel)).rounded(.up)
-DispatchQueue.main.asyncAfter(deadline: .now() + rounds * (watch + marginSeconds) + 60) {
+let expected = rounds * (watch + marginSeconds)
+DispatchQueue.main.asyncAfter(deadline: .now() + max(expected * 1.5, expected + 60)) {
     print("Timed out with \(remaining) pages unfinished.")
     exit(1)
 }

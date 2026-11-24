@@ -141,9 +141,9 @@ python3 -m http.server 8765 --bind 127.0.0.1
 ```
 
 - **Mock banners, all at once:** `swift tools/run_pages.swift` runs every page in WebKit (Safari's engine)
-  and prints PASS or FAIL for each, in about 6 minutes. It also checks `docs/demo/index.html` both with
-  `content.js` injected (the banner is declined and the page says so) and without it (after its wait, the page
-  says what to check). It reads each page once, 2 seconds after the
+  and prints PASS or FAIL for each, in about half a minute for every six pages. It also checks
+  `docs/demo/index.html` both with `content.js` injected (the banner is declined and the page says so) and
+  without it (after its wait, the page says what to check). It reads each page once, 2 seconds after the
   extension stops watching it (30 seconds after the page loads), so a late wrong click still fails. A page
   that loads another (a decline that loads a new page) is read once too, after the watch of the page it loads;
   the harness keeps the clicks, page loads and stand-in `storage.local` in `sessionStorage`, so they outlive
