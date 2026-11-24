@@ -8,6 +8,7 @@
   "detailSaved": { "message": "Switched optional cookies off and saved." },
   "headHidden": { "message": "Hidden." },
   "detailHiddenDecline": { "message": "This banner had no way to say no, so it’s out of sight." },
+  "detailHiddenWall": { "message": "The only choices were pay or accept, so it's out of sight." },
   "detailHiddenHide": { "message": "Hid this page’s cookie banner without answering it." },
   "headQuiet": { "message": "All quiet." },
   "detailQuiet": { "message": "No cookie banner on this page so far." },

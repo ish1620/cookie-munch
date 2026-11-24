@@ -17,7 +17,7 @@
     Shows the real extension popup (../extension/popup.html) with a fake browser API, so its
     states and languages can be checked without Safari. Serve the repository root
     (python3 -m http.server 8765) and open /tests/popup-preview.html. Optional query:
-      ?lang=en|ja|es  &states=rejected,saved,hidden,quiet,hide-mode,off,no-access,not-web
+      ?lang=en|ja|es  &states=rejected,saved,hidden,paywall,quiet,hide-mode,off,no-access,not-web
       &total=137  &repo=1 (pretend the repository URL is set, to show "Report it")
     window.__previews lists each frame's state, headline and the issue URL "Report it" would open.
   -->
@@ -26,7 +26,7 @@
     const q = new URLSearchParams(location.search);
     const lang = q.get('lang') || 'en';
     const total = Number(q.get('total') ?? 137);
-    const states = (q.get('states') || 'rejected,saved,hidden,quiet,hide-mode,off,no-access,not-web').split(',');
+    const states = (q.get('states') || 'rejected,saved,hidden,paywall,quiet,hide-mode,off,no-access,not-web').split(',');
     window.__previews = [];
     // &bare=1: no captions and a transparent background, for screenshots (tools/popup_screenshot.swift).
     if (q.get('bare')) {
@@ -38,6 +38,7 @@
       rejected: { url: 'https://www.theguardian.com/', status: { how: 'rejected', platform: 'Sourcepoint' } },
       saved: { url: 'https://example-news.es/', status: { how: 'saved with optional cookies off', platform: 'Didomi' } },
       hidden: { url: 'https://example.jp/', status: { how: 'hidden' } },
+      paywall: { url: 'https://example-news.example/', status: { how: 'paywall' } },
       quiet: { url: 'https://example.org/', status: null },
       'hide-mode': { url: 'https://www.bbc.com/', status: null, mode: 'hide' },
       off: { url: 'https://mail.example.com/', status: null, disabled: true },

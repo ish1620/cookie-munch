@@ -47,7 +47,7 @@ The popup speaks English, Japanese and Spanish.
 - It doesn't click a button that costs money or a subscription on a "pay or accept" wall, where the
   button says so in the words seen on such walls so far. It still clicks a plain reject or tries the
   banner's settings for a free refusal; a wall with no free way out is hidden where the banner is
-  one it recognises.
+  one it recognises, and the popup says so in Decline mode.
 - It doesn't touch Gmail, Google Calendar, Outlook or Teams with its label search, where "Decline"
   can mean a meeting invite.
 

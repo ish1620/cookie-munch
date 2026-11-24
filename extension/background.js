@@ -73,26 +73,45 @@ async function clearTab(tabId) {
   if (session) await session.remove(keyFor(tabId));
 }
 
-async function onHandled(tabId, { platform, how }) {
-  const already = await getTabStatus(tabId);
-  if (!already) {
-    const { total = 0 } = await api.storage.local.get({ total: 0 });
-    await api.storage.local.set({ total: total + 1 });
-  }
-  // A decline is worth more than a hide: don't let a later "hidden" replace it.
-  if (!already || already.how === 'hidden') await setTabStatus(tabId, { platform, how, at: Date.now() });
-  quietly(api.action.setBadgeText({ tabId, text: '✓' }));
-  try {
-    quietly(api.action.setBadgeBackgroundColor({ tabId, color: '#2B8A3E' }));
-  } catch {
-    // Not every Safari version supports badge colors.
-  }
+const OUTCOME_RANK = {
+  hidden: 1,
+  paywall: 2,
+  rejected: 3,
+  'saved with optional cookies off': 3,
+};
+const OUTCOMES = new Set(Object.keys(OUTCOME_RANK));
+
+const tabQueue = new Map();
+function queueTab(tabId, work) {
+  const next = (tabQueue.get(tabId) ?? Promise.resolve()).then(work, work);
+  tabQueue.set(tabId, next);
+  next.finally(() => { if (tabQueue.get(tabId) === next) tabQueue.delete(tabId); });
+  return next;
+}
+
+function onHandled(tabId, { platform, how }) {
+  return queueTab(tabId, async () => {
+    const already = await getTabStatus(tabId);
+    if (!already) {
+      const { total = 0 } = await api.storage.local.get({ total: 0 });
+      await api.storage.local.set({ total: total + 1 });
+    }
+    // A decline beats a paywall, and a paywall beats a plain "hidden".
+    if (!already || (OUTCOME_RANK[how] ?? 0) > (OUTCOME_RANK[already.how] ?? 0)) {
+      await setTabStatus(tabId, { platform, how, at: Date.now() });
+    }
+    quietly(api.action.setBadgeText({ tabId, text: '✓' }));
+    try {
+      quietly(api.action.setBadgeBackgroundColor({ tabId, color: '#2B8A3E' }));
+    } catch {
+      // Not every Safari version supports badge colors.
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
 // Messages from pages and the popup
 // ---------------------------------------------------------------------------
-const OUTCOMES = new Set(['rejected', 'saved with optional cookies off', 'hidden']);
 const text = (value, max) => (typeof value === 'string' ? value.slice(0, max) : null);
 
 api.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -117,7 +136,7 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
         ? reply(rulesReady.then(() => CookieRules.siteSelectors(message.host)))
         : false;
     case 'getTabStatus':
-      return Number.isInteger(message.tabId) ? reply(getTabStatus(message.tabId)) : false;
+      return Number.isInteger(message.tabId) ? reply(queueTab(message.tabId, () => getTabStatus(message.tabId))) : false;
     default:
       return false;
   }
@@ -126,8 +145,12 @@ api.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // A new page in the tab: forget the old status and clear the badge.
 api.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status !== 'loading') return;
-  quietly(clearTab(tabId));
-  quietly(api.action.setBadgeText({ tabId, text: '' }));
+  // Both in the tab's queue, behind a report that is still being saved: cleared ahead of it, the
+  // badge would get its ✓ back from that report, for a status the next step forgets.
+  quietly(queueTab(tabId, async () => {
+    await clearTab(tabId);
+    quietly(api.action.setBadgeText({ tabId, text: '' }));
+  }));
 });
 
-api.tabs.onRemoved.addListener((tabId) => quietly(clearTab(tabId)));
+api.tabs.onRemoved.addListener((tabId) => quietly(queueTab(tabId, () => clearTab(tabId))));

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pay-or-consent wall inside an iframe</title>
+<meta name="expect" content="">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="paywall">
+<meta name="site-rules" content="#sp_message_container_99">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Pay-or-consent wall inside an iframe</h1>
+<p data-keep>Expect: nothing is clicked. The top page hides the frame's container via its site rule,
+and the frame reports "paywall".</p>
+<div id="sp_message_container_99" data-banner style="position:fixed;inset:auto 16px 16px 16px">
+  <iframe id="sp_message_iframe_99" src="wall-iframe-inner.html" title="SP Consent Message"
+          style="width:100%;height:200px;border:1px solid #ccc;background:#fff"></iframe>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

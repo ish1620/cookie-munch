@@ -13,7 +13,8 @@
   far. Where the banner still offers a free refusal (a plain reject button, or settings with
   switches and a Save), Cookie Munch takes it; where it can't be refused, the banner is hidden as
   any banner that can't be declined (a box whose only recognised button is the pay button is left
-  to the cookie list's rules).
+  to the cookie list's rules), and in Decline mode the popup now says the site offered only pay or
+  accept (in English, Japanese and Spanish; Hide-only mode keeps its existing wording).
 - Buttons that move around a settings panel ("PARTNERS", "BACK") are no longer taken for switches.
 - A settings panel whose switches Cookie Munch can't turn off is no longer saved with the site's defaults.
   The banner is hidden instead, and the popup says it was hidden.

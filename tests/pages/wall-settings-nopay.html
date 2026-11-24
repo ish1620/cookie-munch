@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pay-or-consent wall whose settings omit the pay button</title>
+<meta name="expect" content="settings">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="paywall">
+<link rel="stylesheet" href="style.css">
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Pay-or-consent wall whose settings omit the pay button</h1>
+<p>Expect: skips the pay button, opens "Manage preferences", finds no switches and no legitimate-interest
+view, hides the panel without saving, and still tells the popup "paywall".</p>
+<div class="fixed" role="dialog" aria-modal="true" data-banner>
+  <p>We and our partners use cookies to measure audiences and show you personalised advertising.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="pay" data-close>Subscribe and reject</button>
+  <button data-test="settings" data-open="panel">Manage preferences</button>
+</div>
+<div id="panel" class="fixed" role="dialog" aria-modal="true" data-banner hidden>
+  <h2>Cookie preferences</h2>
+  <p>A subscription is required to opt out of personalised advertising.</p>
+  <button data-test="accept" data-close>Accept all</button>
+  <button data-test="save" data-close>Save my choices</button>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

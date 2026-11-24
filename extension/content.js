@@ -491,7 +491,11 @@
   let bannerSeenAt = 0;
   let settingsOpenedAt = 0;
   let waitUntil = 0;
-  let reported = null;        // what the background script was told: null, 'hidden', or a decline
+  let reported = null;        // what the background script was told: null, 'hidden', 'paywall', or a decline
+  let openedPayWall = false;  // we opened settings from a banner that showed a pay control
+  let frameWallObserver = null;
+  let frameWallInView = false;
+  let frameWallOutOfView = false;
   let legitDone = false;      // the legitimate-interest step ran on this page; it runs once
   let gaveUp = false;         // that step left no Save button: nothing more is switched or saved here
   let loadedAt = document.readyState === 'complete' ? 0 : null;
@@ -506,9 +510,12 @@
     }
   }
 
-  // Tell the background script (for the ✓ and the popup). A decline may follow an earlier "hidden".
+  const OUTCOME_RANK = { hidden: 1, paywall: 2, rejected: 3, 'saved with optional cookies off': 3 };
+
+  // Tell the background script (for the ✓ and the popup). A decline beats a paywall, and a
+  // paywall beats a plain "hidden".
   function report(platform, how) {
-    if (reported && (reported !== 'hidden' || how === 'hidden')) return;
+    if ((OUTCOME_RANK[how] ?? 0) <= (OUTCOME_RANK[reported] ?? 0)) return;
     reported = how;
     send({ type: 'declined', platform, how });
   }
@@ -687,20 +694,76 @@
       !banner.querySelector('main, article, nav, input[type="password"], input[type="search"]');
   }
 
+  const NATIVE_CONTROLS = `button, [role="button"], input[type="button"], input[type="submit"], a, ${SWITCHES}, ${KNOWN.map((k) => k.selector).join(', ')}`;
+  const CUSTOM_CONTROLS = '[onclick], [tabindex], [class*="btn" i], [class*="button" i]';
+
+  // For what the popup is told, a plain link counts only when it shows a price: a pay word alone
+  // ("Subscribe") is also what a newsletter link says, and the popup must not call that a wall.
+  // (kindOf() stays wider on purpose: it only decides what is never clicked.)
+  const PLAIN_LINK = 'a:not([role="button"], [class*="btn" i], [class*="button" i])';
+  function isPayControl(el) {
+    if (!isVisible(el)) return false;
+    const shown = shownText(el);
+    if (shown.length > MAX_PAY_LABEL) return false;
+    return el.matches(PLAIN_LINK) ? PRICE.test(shown) : isPayText(shown);
+  }
+
+  // First pay control currently shown inside a banner (a button, link, switch, known-platform
+  // button, or custom control that isn't a container wrapping prose or other controls), or null.
+  function findPayControl(banner) {
+    for (const root of allRoots(banner)) {
+      for (const el of root.querySelectorAll(NATIVE_CONTROLS)) {
+        if (isPayControl(el)) return el;
+      }
+      for (const el of root.querySelectorAll(CUSTOM_CONTROLS)) {
+        if (el.getAttribute('tabindex') === '-1' && !el.matches('[onclick], [class*="btn" i], [class*="button" i]')) continue;
+        if (el.querySelector('button, a, [role="button"], p')) continue;
+        if (isPayControl(el)) return el;
+      }
+    }
+    return null;
+  }
+
+  const hasPayControl = (banner) => findPayControl(banner) !== null;
+
+  // Inside an iframe, checkVisibility() and getBoundingClientRect() don't see display: none on
+  // the outer <iframe> container, so watch the pay control with IntersectionObserver instead.
+  function watchFrameWall(el) {
+    if (frameWallObserver || typeof IntersectionObserver !== 'function') return;
+    frameWallInView = false;
+    frameWallOutOfView = false;
+    frameWallObserver = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) frameWallInView = true;
+        frameWallOutOfView = frameWallInView && !entry.isIntersecting;
+      }
+    });
+    frameWallObserver.observe(el);
+  }
+
+  function clearFrameWall() {
+    frameWallObserver?.disconnect();
+    frameWallObserver = null;
+    frameWallInView = false;
+    frameWallOutOfView = false;
+  }
+
   // Hide banners that the label search found (ones the list may not know about). Only the
   // buttons a banner's first layer has mark one: not the settings flow's legitimate-interest labels.
   const BANNER_KINDS = ['reject', 'save', 'settings', 'accept'];
   function hideBanners(found) {
     let count = 0;
+    let payWall = false;
     for (const { banner } of BANNER_KINDS.flatMap((kind) => found[kind])) {
       if (hiddenBanners.has(banner) || !safeToHide(banner)) continue;
+      if (mode === 'decline' && (openedPayWall || hasPayControl(banner))) payWall = true;
       hiddenBanners.add(banner);
       banner.style.setProperty('display', 'none', 'important');
       count++;
     }
     if (count) {
-      log(`hid ${count} cookie banner${count > 1 ? 's' : ''}`);
-      report(null, 'hidden');
+      log(`hid ${count} cookie banner${count > 1 ? 's' : ''}${payWall ? ' (pay or accept)' : ''}`);
+      report(null, payWall ? 'paywall' : 'hidden');
       unlockScroll();
     }
   }
@@ -778,8 +841,18 @@
       textCache = new Map();
       hideBanners(findLabelled(allRoots()));
     }
+    const reportHiddenFrameWall = () => {
+      if (!IS_TOP && mode === 'decline' && stage !== 'done' && frameWallOutOfView) {
+        report(null, 'paywall');
+        clearFrameWall();
+      }
+    };
+    reportHiddenFrameWall();
     unlockScroll();
-    setTimeout(unlockScroll, 1500);
+    setTimeout(() => {
+      reportHiddenFrameWall();
+      unlockScroll();
+    }, 1500);
   }
 
   // Start switching off and saving; a failure in it is logged as a failed scan is.
@@ -809,7 +882,18 @@
     const bannerUp = found.accept.length || found.settings.length || found.save.length;
     if (!bannerUp) {
       bannerSeenAt = 0;
+      if (!IS_TOP && !frameWallOutOfView) clearFrameWall();
       return;
+    }
+    if (!IS_TOP && !frameWallObserver) {
+      const banners = new Set(BANNER_KINDS.flatMap((kind) => found[kind]).map((item) => item.banner));
+      for (const banner of banners) {
+        const payEl = findPayControl(banner);
+        if (payEl) {
+          watchFrameWall(payEl);
+          break;
+        }
+      }
     }
     bannerSeenAt ||= now;
 
@@ -820,7 +904,9 @@
       const settings = found.settings[0];
       if (settings) {
         log('no reject button, opening the banner settings');
+        const fromWall = hasPayControl(settings.banner);
         if (!click(settings.el)) return schedule(0);
+        if (fromWall) openedPayWall = true;
         stage = 'settings';
         settingsOpenedAt = now;
         waitUntil = now + 1000;
@@ -863,6 +949,7 @@
   function stop() {
     stopped = true;
     observer?.disconnect();
+    clearFrameWall();
     clearInterval(heartbeat);
     clearTimeout(deadline);
     clearTimeout(timer);

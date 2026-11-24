@@ -8,6 +8,7 @@
   "detailSaved": { "message": "任意のCookieをすべてオフにして保存しました。" },
   "headHidden": { "message": "隠しました。" },
   "detailHiddenDecline": { "message": "拒否するボタンがないバナーだったので、見えなくしました。" },
+  "detailHiddenWall": { "message": "選べるのが支払いか同意だけだったので、見えなくしました。" },
   "detailHiddenHide": { "message": "このページのCookieバナーを、回答せずに隠しました。" },
   "headQuiet": { "message": "静かなページです。" },
   "detailQuiet": { "message": "このページにはまだCookieバナーがありません。" },

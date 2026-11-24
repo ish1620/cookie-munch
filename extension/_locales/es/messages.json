@@ -8,6 +8,7 @@
   "detailSaved": { "message": "Se han desactivado las cookies opcionales y se ha guardado." },
   "headHidden": { "message": "Oculto." },
   "detailHiddenDecline": { "message": "Este aviso no dejaba decir que no, así que se ha ocultado." },
+  "detailHiddenWall": { "message": "Solo dejaba pagar o aceptar, así que se ha ocultado." },
   "detailHiddenHide": { "message": "Se ha ocultado el aviso de cookies de esta página sin responderlo." },
   "headQuiet": { "message": "Todo tranquilo." },
   "detailQuiet": { "message": "De momento no hay aviso de cookies en esta página." },

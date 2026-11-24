@@ -1,6 +1,8 @@
-// Static checks for the extension folder: manifest, translations and version numbers.
-// Run: node tests/check_extension.mjs   (exits non-zero on the first kind of problem it finds)
+// Static and unit checks for the extension folder: manifest, translations, version numbers,
+// tab status precedence in background.js, and popup outcome mapping in popup.js.
+// Run: node tests/check_extension.mjs   (exits non-zero on any problem it finds)
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import vm from 'node:vm';
 
 const root = new URL('../', import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), 'utf8');
@@ -59,8 +61,190 @@ if (xcodeVersions.size !== 1 || short([...xcodeVersions][0]) !== short(manifest.
 }
 if (changelog !== manifest.version) problems.push(`CHANGELOG.md's newest entry is ${changelog}, manifest says ${manifest.version}`);
 
+// Tab status precedence: run background.js and verify decline > paywall > hidden on one tab.
+async function checkBackgroundStatus() {
+  const tick = () => new Promise((resolve) => setTimeout(resolve, 1));
+  const localStore = {};
+  const sessionStore = {};
+  let onMessage = null;
+  let onUpdated = null;
+  const badges = {};
+  const noop = { addListener() {} };
+  const browser = {
+    runtime: {
+      id: 'cookie-munch-test',
+      getURL: (p) => p,
+      onInstalled: noop,
+      onStartup: noop,
+      onMessage: { addListener(fn) { onMessage = fn; } },
+    },
+    storage: {
+      local: {
+        get: async (defaults) => { await tick(); return { ...defaults, ...localStore }; },
+        set: async (items) => { await tick(); Object.assign(localStore, items); },
+      },
+      session: {
+        get: async (key) => { await tick(); return key in sessionStore ? { [key]: sessionStore[key] } : {}; },
+        set: async (items) => { await tick(); Object.assign(sessionStore, items); },
+        remove: async (key) => { await tick(); delete sessionStore[key]; },
+      },
+      onChanged: noop,
+    },
+    action: { setBadgeText: async ({ tabId, text }) => { badges[tabId] = text; }, setBadgeBackgroundColor: async () => {} },
+    tabs: { onUpdated: { addListener(fn) { onUpdated = fn; } }, onRemoved: noop },
+    declarativeNetRequest: { updateEnabledRulesets: async () => {} },
+  };
+  const ctx = vm.createContext({
+    browser,
+    importScripts() {},
+    CookieRules: { load: async () => {}, cssFor: () => '', siteSelectors: () => [] },
+    console,
+    Date,
+    Map,
+    Set,
+    Promise,
+    Number,
+    Object,
+    setTimeout,
+  });
+  ctx.globalThis = ctx;
+  vm.runInContext(read('extension/background.js'), ctx, { filename: 'extension/background.js' });
+  if (!onMessage) {
+    problems.push('background.js did not register a runtime.onMessage listener');
+    return;
+  }
+  const send = (message, tabId) => new Promise((resolve) => {
+    const asyncReply = onMessage(message, tabId == null ? {} : { tab: { id: tabId } }, resolve);
+    if (!asyncReply) resolve(undefined);
+  });
+  const wait = () => new Promise((resolve) => setTimeout(resolve, 15));
+  const cases = [
+    ['paywall then hidden keeps paywall', ['paywall', 'hidden'], 'paywall'],
+    ['paywall then rejected becomes rejected', ['paywall', 'rejected'], 'rejected'],
+    ['paywall then saved becomes saved', ['paywall', 'saved with optional cookies off'], 'saved with optional cookies off'],
+    ['hidden then paywall becomes paywall', ['hidden', 'paywall'], 'paywall'],
+    ['rejected then paywall keeps rejected', ['rejected', 'paywall'], 'rejected'],
+    ['saved then paywall keeps saved', ['saved with optional cookies off', 'paywall'], 'saved with optional cookies off'],
+    ['unknown outcome is ignored', ['bogus'], null],
+  ];
+  let tabId = 1;
+  for (const [label, seq, want] of cases) {
+    const id = tabId++;
+    for (const how of seq) {
+      await send({ type: 'declined', how, platform: null }, id);
+      await wait();
+    }
+    const status = await send({ type: 'getTabStatus', tabId: id });
+    const got = status?.how ?? null;
+    if (got !== want) problems.push(`background tab status (${label}): got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
+  }
+  // Concurrent reports from two frames on the same tab: paywall survives a simultaneous hidden.
+  const raceTab = tabId++;
+  onMessage({ type: 'declined', how: 'paywall', platform: null }, { tab: { id: raceTab } }, () => {});
+  onMessage({ type: 'declined', how: 'hidden', platform: null }, { tab: { id: raceTab } }, () => {});
+  await wait();
+  const raceStatus = await send({ type: 'getTabStatus', tabId: raceTab });
+  if ((raceStatus?.how ?? null) !== 'paywall') {
+    problems.push(`background tab status (concurrent paywall + hidden): got ${JSON.stringify(raceStatus?.how ?? null)}, want "paywall"`);
+  }
+  // A new page starts loading while a report is still being saved: no ✓ may stay without a status.
+  const navTab = tabId++;
+  onMessage({ type: 'declined', how: 'paywall', platform: null }, { tab: { id: navTab } }, () => {});
+  onUpdated?.(navTab, { status: 'loading' });
+  await wait();
+  const navStatus = await send({ type: 'getTabStatus', tabId: navTab });
+  if (!onUpdated) problems.push('background.js did not register a tabs.onUpdated listener');
+  if ((navStatus?.how ?? null) !== null || badges[navTab] !== '') {
+    problems.push(`background tab status (page load during a report): got status ${JSON.stringify(navStatus?.how ?? null)} and badge ${JSON.stringify(badges[navTab])}, want no status and an empty badge`);
+  }
+}
+
+// Popup outcome mapping: run popup.js across every locale and check headline/detail texts.
+async function checkPopupMapping() {
+  const popupSource = read('extension/popup.js');
+  const formatMsg = (table, key, subs = []) => {
+    const entry = table[key];
+    if (!entry) return '';
+    const text = entry.message.replace(/\$([A-Z_]+)\$/g, (_, name) => entry.placeholders?.[name.toLowerCase()]?.content ?? '');
+    return text.replace(/\$(\d)/g, (_, i) => subs[i - 1] ?? '');
+  };
+  async function runPopup(locale, mode, status) {
+    const table = messages[locale];
+    const els = new Map();
+    const makeEl = (id) => ({
+      id,
+      textContent: '',
+      hidden: false,
+      checked: false,
+      value: id === 'mode-hide' ? 'hide' : 'decline',
+      dataset: {},
+      classList: { add() {} },
+      addEventListener() {},
+    });
+    const getEl = (id) => {
+      if (!els.has(id)) els.set(id, makeEl(id));
+      return els.get(id);
+    };
+    const document = {
+      documentElement: { lang: '' },
+      body: { classList: { add() {} } },
+      getElementById: getEl,
+      querySelectorAll: () => [],
+    };
+    const browser = {
+      i18n: {
+        getUILanguage: () => locale,
+        getMessage: (key, subs) => formatMsg(table, key, subs),
+      },
+      tabs: { query: async () => [{ id: 1, url: 'https://example.org/' }] },
+      storage: { local: { get: async (defaults) => ({ ...defaults, total: 1, disabledSites: [], mode }), set: async () => {} } },
+      runtime: { sendMessage: async () => status, getManifest: () => ({ version: manifest.version }) },
+    };
+    const ctx = vm.createContext({
+      browser,
+      document,
+      navigator: { userAgent: 'Macintosh', maxTouchPoints: 0 },
+      URL,
+      URLSearchParams,
+      Intl,
+      Object,
+      String,
+      Math,
+      Set,
+      console,
+    });
+    ctx.globalThis = ctx;
+    vm.runInContext(popupSource, ctx, { filename: 'extension/popup.js' });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return { headline: getEl('headline').textContent, detail: getEl('detail').textContent };
+  }
+
+  for (const locale of locales) {
+    const table = messages[locale];
+    const checks = [
+      ['decline', { how: 'paywall', platform: null }, table.headHidden.message, table.detailHiddenWall.message],
+      ['decline', { how: 'hidden', platform: null }, table.headHidden.message, table.detailHiddenDecline.message],
+      ['hide', { how: 'hidden', platform: null }, table.headHidden.message, table.detailHiddenHide.message],
+      ['decline', { how: 'rejected', platform: null }, table.headMunched.message, table.detailRejected.message],
+      ['decline', { how: 'saved with optional cookies off', platform: null }, table.headMunched.message, table.detailSaved.message],
+    ];
+    for (const [mode, status, wantHead, wantDetail] of checks) {
+      const { headline, detail } = await runPopup(locale, mode, status);
+      if (headline !== wantHead || detail !== wantDetail) {
+        problems.push(`popup (${locale}, ${mode}, ${status.how}): got ${JSON.stringify(headline)} / ${JSON.stringify(detail)}, want ${JSON.stringify(wantHead)} / ${JSON.stringify(wantDetail)}`);
+      }
+    }
+    if (table.detailHiddenWall.message === table.detailHiddenDecline.message) {
+      problems.push(`${locale}: detailHiddenWall matches detailHiddenDecline`);
+    }
+  }
+}
+
+await checkBackgroundStatus();
+await checkPopupMapping();
+
 if (problems.length) {
   console.log(problems.map((p) => `PROBLEM  ${p}`).join('\n'));
   process.exit(1);
 }
-console.log(`extension checks passed (${locales.length} locales, ${used.size} message keys in use, ${allSelectors.length} safe selectors, version ${manifest.version})`);
+console.log(`extension checks passed (${locales.length} locales, ${used.size} message keys in use, ${allSelectors.length} safe selectors, tab status + popup outcomes ok, version ${manifest.version})`);

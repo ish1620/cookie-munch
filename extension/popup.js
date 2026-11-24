@@ -10,6 +10,7 @@ const REPO_URL = globalThis.COOKIE_MUNCH_REPO_URL ?? '';
 const HANDLED = {
   rejected: ['headMunched', 'detailRejected'],
   'saved with optional cookies off': ['headMunched', 'detailSaved'],
+  paywall: ['headHidden', 'detailHiddenWall'],
   hidden: ['headHidden', 'detailHiddenDecline'],
 };
 

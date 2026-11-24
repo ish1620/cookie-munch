@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" class="cookie-wall-open">
+<head>
+<meta charset="utf-8">
+<title>Accept-only banner with a plain "Subscribe" link</title>
+<meta name="expect" content="">
+<meta name="expect-hidden" content="yes">
+<meta name="expect-report" content="hidden">
+<link rel="stylesheet" href="style.css">
+<style>.cookie-wall-open { overflow: hidden; }</style>
+<script src="../harness.js"></script>
+</head>
+<body>
+<h1>Accept-only banner with a plain "Subscribe" link</h1>
+<p>Expect: nothing is clicked. The link says "Subscribe" and shows no price: that is what a
+newsletter link says too, so this is not reported as a pay-or-consent wall. The banner is hidden, page
+scrolling is unfrozen, and the popup is told "hidden".</p>
+<div class="fixed" role="dialog" aria-modal="true" data-banner>
+  <p>We use cookies and similar technologies to analyse traffic and personalise advertising. By
+  continuing you accept our cookie policy.</p>
+  <button data-test="accept" data-close>Accept</button>
+  <a href="#" data-test="link">Subscribe</a>
+</div>
+<script src="../../extension/content.js"></script>
+</body>
+</html>

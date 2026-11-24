@@ -84,7 +84,12 @@ so far; hidden text and the `aria-label` don't count. It is never a reject, a Sa
 or a switch, and it doesn't mark a banner. Every click `content.js` makes also passes one last look at
 the button, `press()`, which reads what it shows at that moment and leaves a pay button alone. The rest of the banner is handled as on any banner: a plain reject is clicked, the settings are
 opened and saved where they allow a free refusal, and a banner that can't be refused is hidden in step
-4. Not covered: a pay label in words not listed, and a plain button that sits inside a larger pay
+4. In Decline mode, hiding a banner that showed a pay control reports `paywall` instead of `hidden`
+(including from inside an iframe whose container was hidden), so the popup says the site offered only
+pay or accept; Hide-only mode still reports `hidden`. On one tab, a decline (`rejected` or `saved with
+optional cookies off`) beats `paywall`, and `paywall` beats `hidden`. For that report, a plain link
+counts as a pay control only when it shows a price: "Subscribe" alone is also what a newsletter link
+says. Not covered: a pay label in words not listed, and a plain button that sits inside a larger pay
 control.
 
 In **Hide-only** mode it adds the hiding CSS right away, hides banners the label search spots and consent
@@ -132,14 +137,15 @@ python3 -m http.server 8765 --bind 127.0.0.1
   wait 32 seconds (the extension watches a page for 30), then run `__result()` in the browser console;
   it must say `pass: true`. There are 37 pages that should be declined, 1 that should be declined once and
   then hide the banner on the page it loads (it goes on to a second page, not listed, and is judged there),
-  4 that should open the settings and then hide the banner, 16 that should be hidden without a click, 6 where
+  5 that should open the settings and then hide the banner, 19 that should be hidden without a click, 6 where
   nothing may be touched, and 5 where a decline must not be reported.
 - **Labels:** `node tests/labels.mjs`. Exits with 1 if a label is classified wrong.
 - **Popup:** <http://127.0.0.1:8765/tests/popup-preview.html> shows the real popup in every state.
   Add `?lang=ja` or `?lang=es` for the translations and `&repo=1` to show the Report link.
 - **Syntax and consistency:** `node --check` on each file in `extension/`, `tests/harness.js`, the `.js`
   files in `tests/live/` and the `.mjs` files in `tests/`, `tests/live/` and `tools/`, then
-  `node tests/check_extension.mjs` (manifest files, translations, version numbers).
+  `node tests/check_extension.mjs` (manifest files, translations, version numbers, tab status precedence
+  and popup outcome mapping).
 - **Real sites (local only):** `npm ci`, then `npx playwright install webkit` once, then `npm run test:live`.
   It opens each site in `tests/live/sites.json` once, in Playwright's WebKit (Spanish, English and French
   banners, and a Japanese site whose banner comes up in English for visitors from the EU), runs
