@@ -16,6 +16,10 @@ Cookie Munch doesn't collect, store or send any personal data.
   name and your setup filled in: Cookie Munch's mode and version, and whether you're on a Mac, iPhone or iPad.
   Nothing is sent unless you choose to submit the issue on GitHub, under your GitHub account. GitHub's
   privacy policy applies there.
-- **The Mac and iPhone app** only shows setup steps. It has no network code.
+- **The Mac and iPhone app** only shows setup steps and links to the repository and the demo page, which open
+  in your browser when you tap them. The app itself has no network code.
+- **The demo page** (hosted on GitHub Pages) is a single static page with no outside resources. It uses no
+  cookies or storage and sends nothing anywhere. GitHub's privacy policy applies to loading the page from
+  GitHub Pages.
 
 If any of this changes, this file and the changelog will say so first.

@@ -27,7 +27,9 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         self.webView.navigationDelegate = self
 
 #if os(iOS)
-        self.webView.scrollView.isScrollEnabled = false
+        // The page scrolls when it is taller than the screen (a small phone, a larger text size) and
+        // stays still when it fits.
+        self.webView.scrollView.alwaysBounceVertical = false
 #endif
 
         self.webView.configuration.userContentController.add(self, name: "controller")

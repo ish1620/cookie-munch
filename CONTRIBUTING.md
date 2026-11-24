@@ -28,6 +28,7 @@ it never clicks Accept, it never sends data anywhere, and it never touches the p
 | `xcode/Cookie Munch/` | The Xcode project that wraps the extension in a Mac and iPhone app |
 | `tools/` | Build, install, release and maintenance scripts (each explains itself at the top) |
 | `tests/` | Mock banner pages, real-site tests (`tests/live/`), a label checker and a popup preview |
+| `docs/` | `docs/demo/index.html` (the demo page, served by GitHub Pages) and `docs/popup.png` |
 | `art/` | The mascot artwork that every icon is made from |
 
 ### What `content.js` does on a page
@@ -140,9 +141,11 @@ python3 -m http.server 8765 --bind 127.0.0.1
 ```
 
 - **Mock banners, all at once:** `swift tools/run_pages.swift` runs every page in WebKit (Safari's engine)
-  and prints PASS or FAIL for each, in about 6 minutes. It reads each page once, 2 seconds after the
+  and prints PASS or FAIL for each, in about 6 minutes. It also checks `docs/demo/index.html` both with
+  `content.js` injected (the banner is declined and the page says so) and without it (after its wait, the page
+  says what to check). It reads each page once, 2 seconds after the
   extension stops watching it (30 seconds after the page loads), so a late wrong click still fails. A page
-  that loads another (a decline that loads a new page) is read once, after the watch of the page it loads;
+  that loads another (a decline that loads a new page) is read once too, after the watch of the page it loads;
   the harness keeps the clicks, page loads and stand-in `storage.local` in `sessionStorage`, so they outlive
   the navigation.
 - **Mock banners, one by one:** open <http://127.0.0.1:8765/tests/>. On each page, keep the tab in front,
@@ -179,8 +182,11 @@ python3 -m http.server 8765 --bind 127.0.0.1
 - **Random switch panels (local only, for work on the switch code):** `node tests/random/run.mjs` builds
   seeded random settings panels from real switch shapes and lists the ones left with a switch on; its header
   has the options.
-- **The installed extension:** open <http://127.0.0.1:8765/tests/demo.html> in Safari. That page doesn't load
-  any of the extension's code; when the extension works, the page and its tab title say "✓ Rejected". Use
+- **The installed extension:** open <http://127.0.0.1:8765/docs/demo/> in Safari (`docs/demo/index.html` is
+  the one copy of the demo page; GitHub Pages serves the same `docs/` folder at
+  <https://ish1620.github.io/cookie-munch/demo/>). That page doesn't load
+  any of the extension's code; when the extension works, the page and its tab title say "✓ Rejected" (or the
+  Japanese or Spanish wording for the browser's language). Use
   `127.0.0.1`, not `localhost`. This check stays manual for now: `node tools/probe_safaridriver.mjs` asks
   Safari's own automation to open the page with the extension (it needs `safaridriver --enable` once), but
   with Safari 27.2 no session started ("The session timed out while connecting to a Safari instance"). Run

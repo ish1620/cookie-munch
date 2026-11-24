@@ -53,6 +53,9 @@ The popup speaks English, Japanese and Spanish.
 
 ## Install
 
+Once Cookie Munch is on in Safari, open the [demo page](https://ish1620.github.io/cookie-munch/demo/)
+to watch it decline a cookie banner.
+
 ### Try it on a Mac (no Xcode)
 
 Needs Safari 26 or later. The extension stays until you quit Safari.

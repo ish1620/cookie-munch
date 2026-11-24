@@ -4,9 +4,9 @@ name: Mock pages (WebKit)
 # minutes, so this only runs when the extension or the tests change.
 on:
   push:
-    paths: ["extension/**", "tests/**", "tools/run_pages.swift", ".github/workflows/pages.yml"]
+    paths: ["extension/**", "tests/**", "docs/demo/**", "tools/run_pages.swift", ".github/workflows/pages.yml"]
   pull_request:
-    paths: ["extension/**", "tests/**", "tools/run_pages.swift", ".github/workflows/pages.yml"]
+    paths: ["extension/**", "tests/**", "docs/demo/**", "tools/run_pages.swift", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:

@@ -18,10 +18,13 @@ fi
 
 files=(README.md CONTRIBUTING.md extension/config.js .github/ISSUE_TEMPLATE/config.yml
   "xcode/Cookie Munch/Shared (App)/Resources/Base.lproj/Main.html")
+# The demo page's address is the repository's GitHub Pages one: https://<owner>.github.io/<repository>.
+pages() { local path="${1#https://github.com/}"; echo "https://${path%%/*}.github.io/${path#*/}"; }
 for file in "${files[@]}"; do
   # Plain text replace (no regex), so dots and slashes in the URLs need no escaping.
-  python3 -I -c 'import sys; p, old, new = sys.argv[1:]; s = open(p).read(); open(p, "w").write(s.replace(old, new))' \
-    "$file" "$current" "$url"
+  python3 -I -c 'import sys; p = sys.argv[1]; s = open(p).read()
+for old, new in zip(sys.argv[2::2], sys.argv[3::2]): s = s.replace(old, new)
+open(p, "w").write(s)' "$file" "$current" "$url" "$(pages "$current")" "$(pages "$url")"
 done
 echo "Links now point to $url (was $current)."
 grep -rn "$url" "${files[@]}" | wc -l | xargs echo "Occurrences:"

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The Mac and iPhone welcome screen now has a "Try it on a demo page" button (in English, Japanese and
+  Spanish) that opens a static demo page in Safari, so you can see Cookie Munch decline a cookie banner right
+  away. The page speaks English, Japanese and Spanish, stores and sends nothing, and says what to check if
+  Cookie Munch doesn't answer.
 - Settings panels now read Sourcepoint's class-only switches, BigID's switches (whose `aria-checked` stays
   `false`), and on/off radio pairs (native radio inputs or ARIA radiogroups). A panel that still holds an
   unlocked control Cookie Munch cannot read (`aria-pressed` or `aria-checked` outside recognised switches,

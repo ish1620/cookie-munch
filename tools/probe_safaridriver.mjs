@@ -1,5 +1,5 @@
 // Probes whether Safari's own automation (safaridriver, plain WebDriver over HTTP) runs Cookie Munch.
-// It starts a session, opens tests/demo.html, and reads whether the page says "✓ Rejected"; then it asks
+// It starts a session, opens docs/demo/index.html, and reads whether the page says "✓ Rejected"; then it asks
 // Safari to install extension/ as a temporary extension (the WebDriver "webextension" command) and reads
 // the page again. Every WebDriver answer is printed as it came. The session and safaridriver always stop.
 // Safari shows a visible automation window while this runs (about 30 seconds).
@@ -11,7 +11,7 @@
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const DEMO_URL = 'http://127.0.0.1:8765/tests/demo.html';
+const DEMO_URL = 'http://127.0.0.1:8765/docs/demo/';
 const PORT = 4471;
 const REQUEST_TIMEOUT_MS = 20000; // per WebDriver request
 const STARTUP_TIMEOUT_MS = 5000;  // for safaridriver to listen

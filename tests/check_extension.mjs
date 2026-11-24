@@ -22,6 +22,17 @@ for (const file of named) {
   if (!existsSync(new URL(`extension/${file}`, root))) problems.push(`manifest names a missing file: ${file}`);
 }
 
+// The demo page's address: wherever a GitHub Pages address is written, it is the one of the
+// repository in extension/config.js (tools/set_repo_url.sh moves both together).
+const repoUrl = read('extension/config.js').match(/COOKIE_MUNCH_REPO_URL = '([^']+)'/)?.[1] ?? '';
+const [owner, repoName] = repoUrl.replace('https://github.com/', '').split('/');
+const pagesBase = `https://${owner}.github.io/${repoName}/`;
+for (const file of ['README.md', 'CONTRIBUTING.md', 'xcode/Cookie Munch/Shared (App)/Resources/Base.lproj/Main.html']) {
+  for (const found of read(file).match(/https:\/\/[\w.-]+\.github\.io\/[\w.-]+\//g) ?? []) {
+    if (found !== pagesBase) problems.push(`${file} names ${found}, but the repository's Pages address is ${pagesBase}`);
+  }
+}
+
 // Translations: every locale has the same keys, and every key the popup and manifest use exists.
 const locales = readdirSync(new URL('extension/_locales/', root));
 const messages = Object.fromEntries(locales.map((l) => [l, JSON.parse(read(`extension/_locales/${l}/messages.json`))]));
